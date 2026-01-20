@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard – HashFlow Monitor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  body {
+    background:#0b0f1a;
+    color:white;
+    font-family:Arial, sans-serif;
+    text-align:center;
+    padding:30px;
+  }
+  .card {
+    max-width:480px;
+    margin:20px auto;
+    background:#131a2e;
+    padding:25px;
+    border-radius:14px;
+  }
+  h2 {
+    color:#f2a900;
+  }
+  .btc {
+    font-size:32px;
+    margin:15px 0;
+  }
+  canvas {
+    background:#0b0f1a;
+    border-radius:8px;
+    margin-top:15px;
+  }
+  table {
+    width:100%;
+    font-size:13px;
+    margin-top:15px;
+    border-collapse:collapse;
+  }
+  td {
+    padding:6px;
+    border-bottom:1px solid #222;
+  }
+  .green { color:#00ff99; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Mining Activity</h2>
+  <p>Status: <span class="green">ACTIVE</span></p>
+  <p>Hashrate: 120 TH/s</p>
+
+  <div class="btc" id="btc">0.00000000 BTC</div>
+
+  <canvas id="chart" width="400" height="120"></canvas>
+</div>
+
+<div class="card">
+  <h2>Recent Activity (Demo)</h2>
+  <table id="tx">
+    <tr><td>+0.00001421 BTC</td><td>Completed</td></tr>
+    <tr><td>+0.00001187 BTC</td><td>Completed</td></tr>
+    <tr><td>+0.00001044 BTC</td><td>Completed</td></tr>
+  </table>
+</div>
+
+<script>
+/* LIVE BTC COUNTER */
+let balance = 0;
+let rate = 0.00000002; // BTC increment per second
+setInterval(() => {
+  balance += rate;
+  document.getElementById("btc").innerText =
+    balance.toFixed(8) + " BTC";
+}, 1000);
+
+/* SIMPLE FAKE CHART ANIMATION */
+let canvas = document.getElementById("chart");
+let ctx = canvas.getContext("2d");
+let points = [];
+for(let i=0;i<50;i++) points.push(Math.random()*100);
+function drawChart(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath();
+  ctx.moveTo(0,120-points[0]);
+  for(let i=1;i<points.length;i++){
+    ctx.lineTo(i*8,120-points[i]);
+  }
+  ctx.strokeStyle="#f2a900";
+  ctx.stroke();
+  points.shift();
+  points.push(Math.random()*100);
+}
+setInterval(drawChart,500);
+</script>
+
+</body>
+  </html>
