@@ -5,22 +5,22 @@
 <title>HashFlow BTC Mining Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {background: linear-gradient(135deg,#0b0f1a,#1a1f2f); color:white; font-family:Arial,sans-serif; padding:20px; text-align:center;}
-.card {max-width:500px; margin:20px auto; background:#131a2e; padding:25px; border-radius:14px; box-shadow:0 0 20px rgba(0,0,0,0.5);}
+body {background: linear-gradient(135deg,#0b0f1a,#1a1f2f); color:white; font-family:Arial,sans-serif; padding:15px; text-align:center;}
+.card {max-width: 95%; margin:15px auto; background:#131a2e; padding:20px; border-radius:12px; box-shadow:0 0 15px rgba(0,0,0,0.5);}
 h2{color:#f2a900;margin-bottom:10px;}
-.btc {font-size:32px;margin:15px 0;}
-canvas{background:#0b0f1a;border-radius:8px;margin-top:15px;}
-table{width:100%; font-size:13px; border-collapse:collapse;}
+.btc {font-size:28px;margin:12px 0; word-break:break-all;}
+canvas{width:100%; height:120px; background:#0b0f1a; border-radius:8px; margin-top:15px;}
+table{width:100%; display:block; overflow-x:auto; font-size:13px; border-collapse:collapse;}
 td{padding:6px;border-bottom:1px solid #222;}
 .green{color:#00ff99;}
 .yellow{color:#ffff66;}
 .btc-box{background:#0b0f1a;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;font-size:14px;}
-input{width:80%;padding:10px;margin:10px 0;border-radius:6px;border:none;font-size:14px;}
+input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:none;font-size:14px;}
 button{padding:10px 18px;margin:10px 5px;background:#f2a900;border:none;color:black;font-weight:bold;border-radius:6px;cursor:pointer;}
 .progress-container{width:100%;background:#222;border-radius:8px;margin-top:15px;height:20px;}
 .progress-bar{height:20px;background:#f2a900;width:0%;border-radius:8px;transition:width 0.5s;}
 .stats{font-size:14px;margin-top:10px;text-align:left;}
-.tx-container{max-height:200px; overflow-y:auto;}
+.tx-container{max-height:250px; overflow-y:auto;}
 </style>
 </head>
 <body>
@@ -40,9 +40,9 @@ button{padding:10px 18px;margin:10px 5px;background:#f2a900;border:none;color:bl
 <h2>Mining Dashboard</h2>
 <p>Status: <span class="green">ACTIVE</span></p>
 <p class="stats">Hashrate: <span id="hashrate">120 TH/s</span> | Blocks mined: <span id="blocks">0</span> | Uptime: <span id="uptime">0h 0m</span></p>
-<div class="btc" id="btc">Loading balance…</div>
+<div class="btc" id="btc">0.00000000 BTC</div>
 <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
-<canvas id="chart" width="400" height="120"></canvas>
+<canvas id="chart"></canvas>
 </div>
 
 <!-- Withdraw -->
@@ -82,55 +82,29 @@ const txContainer = document.querySelector(".tx-container");
 let rate = 0.0000001;
 let paused = false;
 
-// Generate fake initial transactions
-function generateDemoTransactions(count=5){
-  for(let i=0;i<count;i++){
-    const row = document.createElement("tr");
-    const amountCell = document.createElement("td");
-    const statusCell = document.createElement("td");
+// Fake transaction generator
+function addFakeTransaction(){
+  const row = document.createElement("tr");
+  const amountCell = document.createElement("td");
+  const statusCell = document.createElement("td");
 
-    let value = (Math.random()*0.0005 + 0.00001).toFixed(8);
-    amountCell.innerText = "+" + value + " BTC";
+  let value = (Math.random()*0.0005 + 0.00001).toFixed(8);
+  amountCell.innerText = "+" + value + " BTC";
 
-    let status = Math.random() < 0.7 ? "Completed" : "Pending";
-    statusCell.innerText = status;
-    statusCell.className = status==="Completed" ? "green" : "yellow";
+  let status = Math.random() < 0.7 ? "Completed" : "Pending";
+  statusCell.innerText = status;
+  statusCell.className = status==="Completed" ? "green" : "yellow";
 
-    row.appendChild(amountCell);
-    row.appendChild(statusCell);
-    txTable.prepend(row);
-  }
+  row.appendChild(amountCell);
+  row.appendChild(statusCell);
+  txTable.prepend(row);
   txContainer.scrollTop = 0;
 }
 
-// Update transactions from Blockchain.com API
-function updateTransactions(txs){
-  txs.forEach(tx=>{
-    const txHash = tx.hash;
-    if(displayedTxs[txHash]) return;
-    displayedTxs[txHash] = true;
+// Add a new fake transaction every 2 seconds
+setInterval(addFakeTransaction, 2000);
 
-    const row = document.createElement("tr");
-    const amountCell = document.createElement("td");
-    const statusCell = document.createElement("td");
-
-    let value = tx.out.reduce((sum,o)=>sum+(o.addr===address?o.value:0),0)/1e8;
-    amountCell.innerText = (value>0 ? "+" : "") + value.toFixed(8) + " BTC";
-    statusCell.innerText = tx.block_height ? "Completed" : "Pending";
-    statusCell.className = tx.block_height ? "green" : "yellow";
-
-    row.appendChild(amountCell);
-    row.appendChild(statusCell);
-    txTable.prepend(row);
-
-    txContainer.scrollTop = 0;
-  });
-}
-
-// Initialize fake transactions
-generateDemoTransactions();
-
-// Fetch BTC balance + pending from Blockchain.com API
+// Fetch BTC balance from Blockchain.com API
 async function fetchBalance(){
   try {
     const resp = await fetch(`https://blockchain.info/rawaddr/${address}?cors=true`);
@@ -138,8 +112,29 @@ async function fetchBalance(){
     balance = data.final_balance/1e8;
     pendingBalance = (data.total_received - data.final_balance)/1e8;
     document.getElementById("btc").innerText = (balance + pendingBalance).toFixed(8) + " BTC";
-    updateTransactions(data.txs);
+    if(data.txs) data.txs.forEach(updateTransactionFromAPI);
   } catch(e){console.error(e);}
+}
+
+// Update single transaction from API
+function updateTransactionFromAPI(tx){
+  const txHash = tx.hash;
+  if(displayedTxs[txHash]) return;
+  displayedTxs[txHash] = true;
+
+  const row = document.createElement("tr");
+  const amountCell = document.createElement("td");
+  const statusCell = document.createElement("td");
+
+  let value = tx.out.reduce((sum,o)=>sum + (o.addr===address?o.value:0),0)/1e8;
+  amountCell.innerText = (value>0? "+" : "") + value.toFixed(8) + " BTC";
+  statusCell.innerText = tx.block_height ? "Completed" : "Pending";
+  statusCell.className = tx.block_height ? "green" : "yellow";
+
+  row.appendChild(amountCell);
+  row.appendChild(statusCell);
+  txTable.prepend(row);
+  txContainer.scrollTop = 0;
 }
 
 // Mining simulation
@@ -151,7 +146,7 @@ function simulateMining(){
   document.getElementById("btc").innerText = balance.toFixed(8) + " BTC";
 }
 
-// Progress bar
+// Progress bar animation
 let progress = 0;
 function animateProgress(){
   progress += 0.5;
@@ -159,23 +154,35 @@ function animateProgress(){
   document.getElementById("progressBar").style.width = progress+"%";
 }
 
-// Chart
-const canvas=document.getElementById("chart"); 
-const ctx=canvas.getContext("2d"); 
-let points=[];
-for(let i=0;i<50;i++) points.push(Math.random()*100);
+// Chart: smooth progressive BTC
+const canvas=document.getElementById("chart");
+const ctx=canvas.getContext("2d");
+let points = [0];
 function drawChart(){
-  ctx.clearRect(0,0,canvas.width,canvas.height); 
-  ctx.beginPath(); ctx.moveTo(0,120-points[0]);
-  for(let i=1;i<points.length;i++){ctx.lineTo(i*8,120-points[i]);} 
-  ctx.strokeStyle="#f2a900"; ctx.lineWidth=2; ctx.stroke(); 
-  points.shift(); points.push(Math.random()*100);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let w = canvas.width/50;
+  let lastY = canvas.height - points[points.length-1]*canvas.height/0.01;
+  ctx.beginPath(); ctx.moveTo(0,lastY);
+  for(let i=1;i<points.length;i++){
+    let y = canvas.height - points[i]*canvas.height/0.01;
+    ctx.lineTo(i*w,y);
+  }
+  ctx.strokeStyle="#f2a900"; ctx.lineWidth=2; ctx.stroke();
+
+  // Add new point
+  let last = points[points.length-1] || 0;
+  let next = last + rate; // smooth counting
+  points.push(next);
+  if(points.length>50) points.shift();
 }
 
 // Blocks & uptime
 let blocks=0, minutes=0;
-function updateStats(){ blocks+=Math.floor(Math.random()*2); minutes++; 
-  let hours=Math.floor(minutes/60); let mins=minutes%60; 
+function updateStats(){ 
+  blocks+=Math.floor(Math.random()*2); 
+  minutes++; 
+  let hours=Math.floor(minutes/60); 
+  let mins=minutes%60; 
   document.getElementById("blocks").innerText=blocks; 
   document.getElementById("uptime").innerText=`${hours}h ${mins}m`;
 }
@@ -194,7 +201,7 @@ function startPauseCycle(){ setInterval(()=>{ paused=true; setTimeout(()=>{pause
 // 1-hour drop
 function startHourlyDrop(){ setInterval(()=>{ balance *= 0.995; },60*60*1000); }
 
-// Initialization
+// Initialize
 fetchBalance();
 setInterval(fetchBalance,15000);
 setInterval(simulateMining,1000);
@@ -204,5 +211,6 @@ setInterval(updateStats,60000);
 startPauseCycle();
 startHourlyDrop();
 </script>
+
 </body>
 </html>
