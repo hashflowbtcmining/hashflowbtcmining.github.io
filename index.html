@@ -1,66 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>HashFlow Monitor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body {
-      background:#0b0f1a;
-      color:white;
-      font-family:Arial, sans-serif;
-      text-align:center;
-      padding:40px;
-    }
-    .card {
-      max-width:420px;
-      margin:auto;
-      background:#131a2e;
-      padding:30px;
-      border-radius:14px;
-    }
-    h1 {
-      color:#f2a900;
-    }
-    .btc-box {
-      background:#0b0f1a;
-      padding:15px;
-      border-radius:8px;
-      word-break:break-all;
-      margin:15px 0;
-      font-size:14px;
-    }
-    a {
-      display:inline-block;
-      margin-top:20px;
-      padding:14px 22px;
-      background:#f2a900;
-      color:black;
-      text-decoration:none;
-      border-radius:8px;
-      font-weight:bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>HashFlow Access</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{
+  background:#0b0f1a;
+  font-family:Arial,sans-serif;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.card{
+  background:#131a2e;
+  padding:25px;
+  border-radius:12px;
+  width:90%;
+  max-width:360px;
+  text-align:center;
+}
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:6px;
+  font-size:14px;
+}
+button{
+  width:100%;
+  padding:12px;
+  background:#f2a900;
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.note{
+  font-size:12px;
+  opacity:0.7;
+  margin-top:10px;
+}
+.code{
+  margin-top:10px;
+  font-weight:bold;
+  color:#00ff99;
+}
+</style>
 </head>
-
 <body>
 
 <div class="card">
-  <h1>HashFlow Monitor</h1>
-  <p>Live hashing activity visualization platform</p>
+  <h2>Access Dashboard</h2>
 
-  <h3>BTC Address</h3>
-  <div class="btc-box">
-    PUT_YOUR_BITCOIN_ADDRESS_HERE
+  <div id="step1">
+    <input id="userInput" placeholder="Email or phone number">
+    <button onclick="sendCode()">Continue</button>
   </div>
 
-  <p style="font-size:13px;opacity:0.8">
-    Address shown for monitoring/demo purposes.
-  </p>
+  <div id="step2" style="display:none;">
+    <input id="codeInput" placeholder="Enter verification code">
+    <button onclick="verifyCode()">Verify</button>
+    <div class="code" id="showCode"></div>
+  </div>
 
-  <a href="dashboard.html">View Live Dashboard</a>
+  <div class="note">Demo authentication — frontend only</div>
 </div>
+
+<script>
+let generatedCode = "";
+
+function sendCode(){
+  const input = document.getElementById("userInput").value.trim();
+  if(!input){ alert("Enter email or phone"); return; }
+
+  generatedCode = Math.floor(100000 + Math.random()*900000).toString();
+  document.getElementById("showCode").innerText =
+    "Demo code: " + generatedCode;
+
+  document.getElementById("step1").style.display="none";
+  document.getElementById("step2").style.display="block";
+}
+
+function verifyCode(){
+  const entered = document.getElementById("codeInput").value.trim();
+  if(entered === generatedCode){
+    window.location.href = "dashboard.html";
+  } else {
+    alert("Invalid code");
+  }
+}
+</script>
 
 </body>
 </html>
