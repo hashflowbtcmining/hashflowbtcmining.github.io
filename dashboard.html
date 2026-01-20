@@ -2,65 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard – HashFlow Monitor</title>
+<title>HashFlow BTC Mining Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
   body {
-    background:#0b0f1a;
+    background: linear-gradient(135deg, #0b0f1a, #1a1f2f);
     color:white;
     font-family:Arial, sans-serif;
+    padding:20px;
     text-align:center;
-    padding:30px;
   }
   .card {
-    max-width:480px;
+    max-width:500px;
     margin:20px auto;
     background:#131a2e;
     padding:25px;
     border-radius:14px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
   }
-  h2 {
-    color:#f2a900;
-  }
-  .btc {
-    font-size:32px;
-    margin:15px 0;
-  }
-  canvas {
-    background:#0b0f1a;
-    border-radius:8px;
-    margin-top:15px;
-  }
-  table {
-    width:100%;
-    font-size:13px;
-    margin-top:15px;
-    border-collapse:collapse;
-  }
-  td {
-    padding:6px;
-    border-bottom:1px solid #222;
-  }
+  h2 { color:#f2a900; margin-bottom:10px; }
+  .btc { font-size:32px; margin:15px 0; }
+  canvas { background:#0b0f1a; border-radius:8px; margin-top:15px; }
+  table { width:100%; font-size:13px; margin-top:15px; border-collapse:collapse; }
+  td { padding:6px; border-bottom:1px solid #222; }
   .green { color:#00ff99; }
-  .btc-box {
-    background:#0b0f1a;
-    padding:10px;
-    border-radius:6px;
-    word-break:break-all;
-    margin:10px 0;
-    font-size:14px;
-  }
+  .btc-box { background:#0b0f1a; padding:10px; border-radius:6px; word-break:break-all; margin:10px 0; font-size:14px; }
   button {
-    padding:6px 12px;
-    margin-bottom:10px;
-    background:#f2a900;
-    border:none;
-    color:black;
-    font-weight:bold;
-    border-radius:6px;
-    cursor:pointer;
+    padding:8px 16px; margin:5px; background:#f2a900; border:none; color:black; font-weight:bold; border-radius:6px; cursor:pointer;
   }
+  .progress-container { width:100%; background:#222; border-radius:8px; margin-top:15px; height:20px; }
+  .progress-bar { height:20px; background:#f2a900; width:0%; border-radius:8px; transition: width 0.5s; }
+  img.qr { margin-top:10px; width:150px; height:150px; }
+  .stats { font-size:14px; margin-top:10px; text-align:left; }
 </style>
 </head>
 
@@ -76,28 +50,29 @@
 </div>
 
 <div class="card">
-  <h2>Mining Activity</h2>
+  <h2>Mining Dashboard</h2>
   <p>Status: <span class="green">ACTIVE</span></p>
-  <p>Hashrate: 120 TH/s</p>
-
+  <p class="stats">Hashrate: <span id="hashrate">120 TH/s</span> | Blocks mined: <span id="blocks">0</span> | Uptime: <span id="uptime">0h 0m</span></p>
+  
   <div class="btc" id="btc">0.00000000 BTC</div>
-
+  
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  
   <canvas id="chart" width="400" height="120"></canvas>
 </div>
 
 <div class="card">
   <h2>Recent Activity</h2>
-  <table id="tx">
-  </table>
+  <table id="tx"></table>
 </div>
 
 <script>
 /* COPY BTC ADDRESS */
 function copyAddress(){
   const btc = document.getElementById('btcAddress').innerText;
-  navigator.clipboard.writeText(btc).then(()=>{
-    alert('BTC address copied to clipboard!');
-  });
+  navigator.clipboard.writeText(btc).then(()=>{ alert('BTC address copied!'); });
 }
 
 /* LIVE BTC COUNTER */
@@ -105,11 +80,18 @@ let balance = 0;
 let rate = 0.00000002; // BTC increment per second
 setInterval(() => {
   balance += rate;
-  document.getElementById("btc").innerText =
-    balance.toFixed(8) + " BTC";
+  document.getElementById("btc").innerText = balance.toFixed(8) + " BTC";
 }, 1000);
 
-/* FAKE TRANSACTIONS GENERATED DYNAMICALLY */
+/* PROGRESS BAR */
+let progress = 0;
+setInterval(()=>{
+  progress += 0.5;
+  if(progress > 100) progress = 0;
+  document.getElementById("progressBar").style.width = progress + "%";
+}, 500);
+
+/* FAKE TRANSACTIONS */
 let txTable = document.getElementById("tx");
 function addTransaction(){
   let amount = (Math.random()*0.00002+0.00001).toFixed(8);
@@ -122,16 +104,11 @@ function addTransaction(){
   row.appendChild(amountCell);
   row.appendChild(statusCell);
   txTable.prepend(row);
-
-  // Keep only last 10 transactions
-  if(txTable.rows.length > 10){
-    txTable.deleteRow(txTable.rows.length-1);
-  }
+  if(txTable.rows.length > 10){ txTable.deleteRow(txTable.rows.length-1); }
 }
-// Add a new transaction every 5 seconds
 setInterval(addTransaction, 5000);
 
-/* SIMPLE FAKE CHART ANIMATION */
+/* SMOOTH ANIMATED CHART */
 let canvas = document.getElementById("chart");
 let ctx = canvas.getContext("2d");
 let points = [];
@@ -144,12 +121,24 @@ function drawChart(){
     ctx.lineTo(i*8,120-points[i]);
   }
   ctx.strokeStyle="#f2a900";
+  ctx.lineWidth=2;
   ctx.stroke();
   points.shift();
   points.push(Math.random()*100);
 }
 setInterval(drawChart,500);
-</script>
 
+/* FAKE MINING STATS */
+let blocks = 0, minutes = 0;
+setInterval(()=>{
+  blocks += Math.floor(Math.random()*2); 
+  minutes++;
+  let hours = Math.floor(minutes/60);
+  let mins = minutes % 60;
+  document.getElementById("blocks").innerText = blocks;
+  document.getElementById("uptime").innerText = `${hours}h ${mins}m`;
+}, 60000); // every minute
+
+</script>
 </body>
-                                         </html>
+  </html>
