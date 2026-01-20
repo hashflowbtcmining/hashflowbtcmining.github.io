@@ -2,95 +2,64 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HashFlow Access Verification</title>
+<title>HashFlow BTC Mining Login</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{
-  margin:0;
-  padding:0;
-  font-family:Arial,sans-serif;
-  background:#0b0f1a;
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.card{
-  width:90%;
-  max-width:400px;
-  background:#131a2e;
-  padding:25px;
-  border-radius:14px;
-  box-shadow:0 0 20px rgba(0,0,0,0.6);
-  text-align:center;
-}
-h2{color:#f2a900;}
-input{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:8px;
-  border:none;
-  font-size:14px;
-}
-button{
-  width:100%;
-  padding:12px;
-  margin-top:15px;
-  background:#f2a900;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-}
-.note{
-  font-size:12px;
-  opacity:0.7;
-  margin-top:10px;
-}
-.hidden{display:none;}
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;text-align:center;}
+.card{max-width:95%;margin:50px auto;padding:20px;border-radius:12px;background:#131a2e;}
+h2{color:#f2a900;margin-bottom:15px;}
+input{width:90%;padding:12px;margin:10px 0;border-radius:6px;border:none;font-size:14px;display:block;margin-left:auto;margin-right:auto;}
+button{padding:12px 20px;margin-top:10px;border:none;border-radius:6px;font-weight:bold;background:#f2a900;color:black;cursor:pointer;}
+#codeSection{display:none;margin-top:10px;}
+#message{color:#f2a900;margin-top:10px;font-size:14px;}
 </style>
 </head>
 <body>
 
 <div class="card">
   <h2>Verification Required</h2>
-  <p>Enter your email or phone number</p>
+  <p>Enter your email or phone number to receive a code:</p>
+  <input type="text" id="userInput" placeholder="Email or Phone">
+  <button id="getCodeBtn">Get Verification Code</button>
 
-  <input id="userInput" placeholder="Email or phone number">
-  <button onclick="sendCode()">Get Verification Code</button>
-
-  <div id="codeBox" class="hidden">
-    <input id="codeInput" placeholder="Enter verification code">
-    <button onclick="verifyCode()">Verify & Continue</button>
+  <!-- Code input appears here after clicking -->
+  <div id="codeSection">
+    <input type="text" id="verificationCodeInput" placeholder="Enter Verification Code">
+    <button id="submitCodeBtn">Submit Code</button>
   </div>
 
-  <p class="note">Access verification is simulated for demonstration purposes.</p>
+  <p id="message"></p>
 </div>
 
 <script>
+// Generate a 6-digit code
 let generatedCode = "";
 
-function sendCode(){
-  const val = document.getElementById("userInput").value.trim();
-  if(val===""){
-    alert("Please enter email or phone");
-    return;
-  }
-  generatedCode = Math.floor(100000 + Math.random()*900000).toString();
-  alert("Your verification code: " + generatedCode);
-  document.getElementById("codeBox").classList.remove("hidden");
-}
+document.getElementById("getCodeBtn").addEventListener("click", function(){
+  const userValue = document.getElementById("userInput").value.trim();
+  if(userValue===""){ alert("Enter email or phone number."); return; }
 
-function verifyCode(){
-  const entered = document.getElementById("codeInput").value.trim();
-  if(entered === generatedCode){
+  // Generate 6-digit code
+  generatedCode = Math.floor(100000 + Math.random()*900000).toString();
+  console.log("Demo code (for testing):", generatedCode);
+
+  // Show the code input section
+  document.getElementById("codeSection").style.display = "block";
+  document.getElementById("message").innerText = "Verification code sent! Enter it below.";
+
+  // Optionally, you could send this via email/phone in real system
+});
+
+// Submit code
+document.getElementById("submitCodeBtn").addEventListener("click", function(){
+  const userCode = document.getElementById("verificationCodeInput").value.trim();
+  if(userCode===generatedCode){
+    // Correct → redirect to dashboard
     window.location.href = "dashboard.html";
-  }else{
-    alert("Incorrect code");
+  } else {
+    document.getElementById("message").innerText = "Incorrect code. Try again.";
   }
-}
+});
 </script>
 
 </body>
