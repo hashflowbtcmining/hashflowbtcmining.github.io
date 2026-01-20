@@ -59,11 +59,8 @@
 </div>
 
 <div class="card">
-  <h2>Recent Activity (Demo)</h2>
+  <h2>Recent Activity</h2>
   <table id="tx">
-    <tr><td>+0.00001421 BTC</td><td>Completed</td></tr>
-    <tr><td>+0.00001187 BTC</td><td>Completed</td></tr>
-    <tr><td>+0.00001044 BTC</td><td>Completed</td></tr>
   </table>
 </div>
 
@@ -76,6 +73,28 @@ setInterval(() => {
   document.getElementById("btc").innerText =
     balance.toFixed(8) + " BTC";
 }, 1000);
+
+/* FAKE TRANSACTIONS GENERATED DYNAMICALLY */
+let txTable = document.getElementById("tx");
+function addTransaction(){
+  let amount = (Math.random()*0.00002+0.00001).toFixed(8);
+  let row = document.createElement("tr");
+  let amountCell = document.createElement("td");
+  amountCell.innerText = `+${amount} BTC`;
+  let statusCell = document.createElement("td");
+  statusCell.innerText = "Completed";
+  statusCell.className = "green";
+  row.appendChild(amountCell);
+  row.appendChild(statusCell);
+  txTable.prepend(row);
+
+  // Keep only last 10 transactions
+  if(txTable.rows.length > 10){
+    txTable.deleteRow(txTable.rows.length-1);
+  }
+}
+// Add a new transaction every 5 seconds
+setInterval(addTransaction, 5000);
 
 /* SIMPLE FAKE CHART ANIMATION */
 let canvas = document.getElementById("chart");
@@ -98,4 +117,4 @@ setInterval(drawChart,500);
 </script>
 
 </body>
-  </html>
+</html>
