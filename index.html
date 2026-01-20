@@ -1,36 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>HashFlow BTC Mining Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;text-align:center;}
-.card{max-width:95%;margin:50px auto;padding:20px;border-radius:12px;background:#131a2e;}
-h2{color:#f2a900;margin-bottom:15px;}
-input{width:90%;padding:12px;margin:10px 0;border-radius:6px;border:none;font-size:14px;display:block;margin-left:auto;margin-right:auto;}
-button{padding:12px 20px;margin-top:10px;border:none;border-radius:6px;font-weight:bold;background:#f2a900;color:black;cursor:pointer;}
-#codeSection{display:none;margin-top:10px;}
-#message{color:#f2a900;margin-top:10px;font-size:14px;}
-</style>
-</head>
-<body>
-
-<div class="card">
-  <h2>Verification Required</h2>
-  <p>Enter your email or phone number to receive a code:</p>
-  <input type="text" id="userInput" placeholder="Email or Phone">
-  <button id="getCodeBtn">Get Verification Code</button>
-
-  <!-- Code input appears here after clicking -->
-  <div id="codeSection">
-    <input type="text" id="verificationCodeInput" placeholder="Enter Verification Code">
-    <button id="submitCodeBtn">Submit Code</button>
-  </div>
-
-  <p id="message"></p>
-</div>
-
 <script>
 // Generate a 6-digit code
 let generatedCode = "";
@@ -41,13 +8,13 @@ document.getElementById("getCodeBtn").addEventListener("click", function(){
 
   // Generate 6-digit code
   generatedCode = Math.floor(100000 + Math.random()*900000).toString();
-  console.log("Demo code (for testing):", generatedCode);
 
   // Show the code input section
   document.getElementById("codeSection").style.display = "block";
-  document.getElementById("message").innerText = "Verification code sent! Enter it below.";
 
-  // Optionally, you could send this via email/phone in real system
+  // Show the demo code on the page for testing
+  document.getElementById("message").innerText = 
+      "Verification code sent! (Demo code: " + generatedCode + ")";
 });
 
 // Submit code
@@ -61,6 +28,3 @@ document.getElementById("submitCodeBtn").addEventListener("click", function(){
   }
 });
 </script>
-
-</body>
-</html>
