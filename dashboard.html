@@ -1,6 +1,7 @@
 let displayedTxs = {};
 const txTable = document.getElementById("tx");
 const txContainer = document.querySelector(".tx-container");
+const address = "bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav";
 
 // Generate fake initial transactions
 function generateDemoTransactions(count=5){
@@ -10,7 +11,7 @@ function generateDemoTransactions(count=5){
     const statusCell = document.createElement("td");
 
     let value = (Math.random()*0.0005 + 0.00001).toFixed(8);
-    amountCell.innerText = "+"+value+" BTC";
+    amountCell.innerText = "+" + value + " BTC";
 
     let status = Math.random() < 0.7 ? "Completed" : "Pending";
     statusCell.innerText = status;
@@ -23,7 +24,7 @@ function generateDemoTransactions(count=5){
   txContainer.scrollTop = 0;
 }
 
-// Update transactions from API + append to table
+// Update transactions from Blockchain.com API
 function updateTransactions(txs){
   txs.forEach(tx=>{
     const txHash = tx.hash;
@@ -34,14 +35,16 @@ function updateTransactions(txs){
     const amountCell = document.createElement("td");
     const statusCell = document.createElement("td");
 
-    let value = tx.out.reduce((sum,o)=>sum+(o.addr===address?o.value:0),0)/1e8;
-    amountCell.innerText = (value>0? "+" : "") + value.toFixed(8) + " BTC";
+    let value = tx.out.reduce((sum,o)=>sum + (o.addr===address?o.value:0),0)/1e8;
+    amountCell.innerText = (value>0 ? "+" : "") + value.toFixed(8) + " BTC";
     statusCell.innerText = tx.block_height ? "Completed" : "Pending";
     statusCell.className = tx.block_height ? "green" : "yellow";
 
     row.appendChild(amountCell);
     row.appendChild(statusCell);
     txTable.prepend(row);
+
+    // Auto-scroll newest transaction into view
     txContainer.scrollTop = 0;
   });
 }
