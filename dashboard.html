@@ -83,9 +83,9 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-
 let currentEmail = localStorage.getItem("currentEmail") || "";
 
+// ===== Dashboard Data =====
 const plans = [
   {name:"Plan A", profit:"30%", min:200, max:599},
   {name:"Plan B", profit:"45%", min:600, max:1000},
@@ -95,13 +95,30 @@ const plans = [
   {name:"Plan F", profit:"85%", min:10000, max:"Unlimited"}
 ];
 
+// ===== Live Testimonials Data =====
 const testimonialsData = [
   {name:"Alice", msg:"Just started mining, love it!"},
   {name:"Bob", msg:"My first BTC deposit was smooth!"},
   {name:"Charlie", msg:"Mining dashboard looks real and professional."},
   {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
-  {name:"Eve", msg:"Highly recommend this platform."}
+  {name:"Eve", msg:"Highly recommend this platform."},
+  {name:"Frank", msg:"Mining has never been easier."},
+  {name:"Grace", msg:"I am seeing my BTC grow every minute."},
+  {name:"Hannah", msg:"Customer support helped me quickly."},
+  {name:"Ian", msg:"I love the live mining chart feature!"},
+  {name:"Jack", msg:"Fast deposits and smooth withdrawals."},
+  {name:"Kim", msg:"The dashboard feels very realistic."},
+  {name:"Leo", msg:"I’ve earned more than I expected!"},
+  {name:"Mia", msg:"Really enjoying the investment experience."},
+  {name:"Nina", msg:"Everything looks so professional."},
+  {name:"Oscar", msg:"I feel safe investing here."},
+  {name:"Paul", msg:"I made my first BTC profit today!"},
+  {name:"Quinn", msg:"The live activity makes it exciting."},
+  {name:"Rachel", msg:"This dashboard feels real and alive."},
+  {name:"Sam", msg:"I’m watching my investment grow!"},
+  {name:"Tina", msg:"Love how the charts update in real time."}
 ];
+let lastTestimonials = [];
 
 // ===== Login =====
 function showDashboard(){
@@ -110,9 +127,7 @@ function showDashboard(){
   initPlans();
   initTestimonials();
 }
-
 if(currentEmail) showDashboard();
-
 document.getElementById("loginBtn").onclick = function(){
   const email = document.getElementById("emailInput").value.trim().toLowerCase();
   if(!email){alert("Enter email"); return;}
@@ -227,7 +242,6 @@ function initPlans(){
     const countdown = document.getElementById("countdown"+index);
     const paidBtn = document.getElementById("paidBtn"+index);
 
-    // Payment logic
     let paymentConfirmed = false;
     let startTime = null;
 
@@ -243,7 +257,6 @@ function initPlans(){
       }
     }
 
-    // Countdown
     function updateCountdown(){
       if(!paymentConfirmed){
         countdown.innerText="Withdrawal available after 3 days of mining";
@@ -300,10 +313,16 @@ function initTestimonials(){
   const container = document.getElementById("testimonials");
   container.innerHTML="";
   setInterval(()=>{
-    const t = testimonialsData[Math.floor(Math.random()*testimonialsData.length)];
+    let t;
+    do { t = testimonialsData[Math.floor(Math.random()*testimonialsData.length)]; }
+    while(lastTestimonials.includes(t.name));
+    
+    lastTestimonials.push(t.name);
+    if(lastTestimonials.length>5) lastTestimonials.shift();
+
     const div = document.createElement("div");
     div.className="tx";
-    div.innerHTML=`<span>${t.name}: ${t.msg}</span>`;
+    div.innerHTML=`<span><strong>${t.name}:</strong> ${t.msg}</span>`;
     container.prepend(div);
     if(container.children.length>50) container.removeChild(container.lastChild);
   },3000);
@@ -313,4 +332,4 @@ function initTestimonials(){
 </script>
 
 </body>
-  </html>
+</html>
