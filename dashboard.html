@@ -2,178 +2,260 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HashFlow BTC Dashboard</title>
+<title>HashFlow Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 :root{
-  --bg:#0b0f1a; --card:#131a2e; --accent:#f2a900;
-  --ok:#00ff99; --warn:#ffcc66; --text:#fff;
+  --bg:#0b0f1a;
+  --card:#131a2e;
+  --accent:#f2a900;
+  --text:#ffffff;
 }
 [data-theme="light"]{
-  --bg:#f2f3f7; --card:#fff; --text:#000;
+  --bg:#f2f3f7;
+  --card:#ffffff;
+  --text:#000000;
 }
-body{margin:0;font-family:Arial;background:var(--bg);color:var(--text)}
-.card{background:var(--card);border-radius:12px;padding:18px;margin:16px auto;max-width:95%}
-h2{color:var(--accent);text-align:center}
-button,input{width:100%;padding:10px;border-radius:6px;border:none;margin-top:8px}
-button{background:var(--accent);font-weight:bold;cursor:pointer}
-canvas{width:100%;height:140px;background:#000;border-radius:8px}
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.card{
+  background:var(--card);
+  max-width:420px;
+  margin:80px auto;
+  padding:20px;
+  border-radius:12px;
+}
+input,button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:6px;
+  border:none;
+  font-size:15px;
+}
+button{
+  background:var(--accent);
+  font-weight:bold;
+  cursor:pointer;
+}
 .hidden{display:none}
 
-/* TOP MENU */
+/* TOP BAR */
 #topbar{
-  position:fixed;top:0;left:0;right:0;
-  background:#10162b;display:flex;justify-content:space-between;
-  padding:10px 16px;z-index:999
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  background:#10162b;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  z-index:999;
 }
-#menuBtn{font-size:22px;cursor:pointer}
+#usernameDisplay{
+  font-weight:bold;
+  font-size:16px;
+}
+#menuBtn{
+  font-size:22px;
+  cursor:pointer;
+}
 #menu{
-  position:fixed;top:50px;left:10px;
-  background:var(--card);border-radius:10px;
-  padding:10px;display:none;z-index:1000
+  display:none;
+  position:fixed;
+  top:56px;
+  right:10px;
+  background:var(--card);
+  border-radius:10px;
+  padding:10px;
+  z-index:1000;
 }
-#menu div{padding:8px;cursor:pointer}
+#menu div{
+  padding:8px;
+  cursor:pointer;
+}
 
-/* WITHDRAWALS */
-.tx{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px solid #222;padding:8px 0}
-.badge{padding:2px 6px;border-radius:6px;font-size:11px}
-.pending{background:var(--warn);color:#000}
-.confirmed{background:var(--ok);color:#000}
-.progress{height:6px;background:#1b2340;border-radius:6px;margin-top:4px}
-.progress div{height:100%;background:var(--ok);width:0%}
+/* DASHBOARD */
+#dashboard{
+  margin-top:80px;
+  padding:16px;
+}
+.section{
+  background:var(--card);
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:16px;
+  max-width:900px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.center{text-align:center}
+.small{font-size:13px;opacity:.8}
 </style>
 </head>
+
 <body data-theme="dark">
 
+<!-- TOP BAR -->
 <div id="topbar">
   <div id="menuBtn">☰</div>
-  <div><b>HashFlow</b></div>
+  <div id="usernameDisplay"></div>
+  <div></div>
 </div>
 
 <div id="menu">
-  <div onclick="show('withdrawals')">Live Withdrawal Group</div>
-  <div onclick="show('support')">Contact Support</div>
+  <div onclick="showSection('withdrawals')">Live Withdrawal Group</div>
+  <div onclick="showSection('support')">Contact Admin</div>
   <div onclick="toggleTheme()">Toggle Theme</div>
   <div onclick="logout()">Log Out</div>
 </div>
 
 <!-- LOGIN -->
-<div class="card" id="login">
-  <h2>Login</h2>
-  <input id="email" placeholder="Email">
-  <button onclick="login()">Login</button>
+<div class="card" id="loginCard">
+  <h2 class="center">Secure Login</h2>
+
+  <!-- STEP 1 -->
+  <div id="step1">
+    <input id="contactInput" placeholder="Email or phone number">
+    <button onclick="sendCode()">Get verification code</button>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" class="hidden">
+    <p class="center small">
+      Your code: <b id="generatedCode"></b><br>
+      Code expires in <span id="countdown">60</span>s
+    </p>
+    <input id="codeInput" placeholder="Enter verification code">
+    <button onclick="verifyCode()">Submit</button>
+    <button onclick="sendCode()">Resend code</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" class="hidden">
+    <input id="usernameInput" placeholder="Create a username">
+    <button onclick="finishLogin()">Continue</button>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
 
-<!-- MINING (UNCHANGED STYLE) -->
-<div class="card">
-  <h2>Mining Dashboard</h2>
-  <div id="balance" style="font-size:28px;text-align:center">0.00000000 BTC</div>
-  <canvas id="chart"></canvas>
-</div>
+  <div class="section center">
+    <h2>Mining Dashboard</h2>
+    <p class="small">Live mining statistics</p>
+    <div style="font-size:28px;margin-top:10px">0.00000000 BTC</div>
+  </div>
 
-<!-- INVESTMENT PLANS (UNCHANGED – ALWAYS SHOWING) -->
-<div class="card">
-  <h2>Investment Plans</h2>
-  <p style="text-align:center;color:var(--accent)">
-    Withdrawal available after 3 days of mining
-  </p>
-  <p>Plan A – 30% Daily</p>
-  <p>Plan B – 45% Daily</p>
-  <p>Plan C – 60% Daily</p>
-</div>
+  <div class="section center" id="withdrawals">
+    <h2>Live Withdrawal Group</h2>
+    <p class="small">Real-time withdrawal activity</p>
+  </div>
 
-<!-- LIVE WITHDRAWALS -->
-<div class="card" id="withdrawals">
-  <h2>Live Withdrawal Group</h2>
-  <div id="feed"></div>
-</div>
-
-<!-- SUPPORT -->
-<div class="card hidden" id="support">
-  <h2>Support Inbox</h2>
-  <textarea id="msg" placeholder="Write message..." style="width:100%;height:80px"></textarea>
-  <button onclick="sendMsg()">Send</button>
-  <div id="adminReply"></div>
-</div>
+  <div class="section center hidden" id="support">
+    <h2>Contact Support</h2>
+    <textarea style="width:100%;height:80px;border-radius:6px"></textarea>
+    <button>Send Message</button>
+  </div>
 
 </div>
 
 <script>
 /* MENU */
-menuBtn.onclick=()=>menu.style.display=menu.style.display?'':'block';
-function show(id){
-  document.querySelectorAll('#dashboard .card').forEach(c=>c.style.display='none');
-  document.getElementById(id).style.display='block';
-  menu.style.display='none';
-}
-
-/* LOGIN */
-let email='';
-function login(){
-  email=emailInput=email.value.toLowerCase();
-  localStorage.setItem('email',email);
-  loginDiv=login;loginDiv.style.display='none';
-  dashboard.classList.remove('hidden');
-}
+menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
 
 /* THEME */
 function toggleTheme(){
-  document.body.dataset.theme =
-    document.body.dataset.theme==='dark'?'light':'dark';
+  const t=document.body.dataset.theme==='dark'?'light':'dark';
+  document.body.dataset.theme=t;
+  localStorage.setItem('theme',t);
+}
+if(localStorage.getItem('theme')){
+  document.body.dataset.theme=localStorage.getItem('theme');
+}
+
+/* LOGIN LOGIC */
+let code="", timer=null, timeLeft=60, userContact="";
+
+function sendCode(){
+  userContact=document.getElementById('contactInput').value.trim();
+  if(!userContact){alert("Enter email or phone");return;}
+
+  code=Math.floor(100000+Math.random()*900000).toString();
+  document.getElementById('generatedCode').innerText=code;
+
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2').classList.remove('hidden');
+
+  clearInterval(timer);
+  timeLeft=60;
+  document.getElementById('countdown').innerText=timeLeft;
+
+  timer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('countdown').innerText=timeLeft;
+    if(timeLeft<=0){
+      clearInterval(timer);
+      alert("Code expired. Please resend.");
+    }
+  },1000);
+}
+
+function verifyCode(){
+  if(document.getElementById('codeInput').value.trim()!==code){
+    alert("Invalid code");
+    return;
+  }
+  document.getElementById('step2').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
+}
+
+function finishLogin(){
+  const username=document.getElementById('usernameInput').value.trim();
+  if(!username){alert("Create a username");return;}
+
+  localStorage.setItem('verifiedUser',JSON.stringify({
+    contact:userContact,
+    username:username
+  }));
+
+  enterDashboard(username);
+}
+
+/* AUTO LOGIN */
+const saved=localStorage.getItem('verifiedUser');
+if(saved){
+  const u=JSON.parse(saved);
+  enterDashboard(u.username);
+}
+
+function enterDashboard(username){
+  document.getElementById('loginCard').style.display='none';
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('topbar').style.display='flex';
+  document.getElementById('usernameDisplay').innerText=username;
+}
+
+/* NAV */
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('hidden'));
+  if(id==='support'){
+    document.getElementById('support').classList.remove('hidden');
+  }
+  menu.style.display='none';
 }
 
 /* LOGOUT */
 function logout(){
-  localStorage.clear();location.reload();
+  localStorage.removeItem('verifiedUser');
+  location.reload();
 }
-
-/* MINING */
-let bal=0;
-setInterval(()=>{
-  bal+=0.00000008;
-  balance.innerText=bal.toFixed(8)+' BTC';
-},1000);
-
-/* CHART */
-const ctx=chart.getContext('2d');let pts=[0];
-setInterval(()=>{
-  ctx.clearRect(0,0,chart.width,chart.height);
-  pts.push((pts.at(-1)||0)+0.00000008);
-  if(pts.length>40)pts.shift();
-  ctx.beginPath();
-  pts.forEach((p,i)=>{
-    let y=chart.height-(p*8000000);
-    i?ctx.lineTo(i*(chart.width/40),y):ctx.moveTo(0,y);
-  });
-  ctx.strokeStyle='#f2a900';ctx.stroke();
-},500);
-
-/* REAL WITHDRAWALS – BLOCKSTREAM */
-async function load(){
-  try{
-    const tip=await (await fetch('https://blockstream.info/api/blocks/tip/hash')).text();
-    const txs=await (await fetch(`https://blockstream.info/api/block/${tip}/txs`)).json();
-    txs.slice(0,8).forEach(tx=>{
-      const v=tx.vout.find(o=>o.value>50000);
-      if(!v)return;
-      const btc=(v.value/1e8).toFixed(6);
-      const d=document.createElement('div');
-      d.className='tx';
-      d.innerHTML=`
-        <span>
-          Withdrawal ${btc} BTC
-          <span class="badge pending">Pending</span>
-          <div class="progress"><div></div></div>
-        </span>
-        <a href="https://blockstream.info/tx/${tx.txid}" target="_blank">TX</a>`;
-      feed.prepend(d);
-    });
-  }catch(e){}
-}
-load();setInterval(load,90000);
 </script>
+
 </body>
 </html>
