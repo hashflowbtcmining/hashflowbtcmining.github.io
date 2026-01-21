@@ -82,7 +82,6 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 <div class="tx-container" id="txs"></div>
 </div>
 
-<!-- Investment Plans -->
 <h2>Investment Plans</h2>
 <div class="card" id="plansContainer"></div>
 
@@ -161,12 +160,12 @@ const feed=document.getElementById('feed');
 let points=[0],balance=0,blocks=0,minutes=0;
 const rate=0.00000002;
 
-// Mining chart + balance
+// Mining chart + balance (chart leading)
 setInterval(()=>{
   balance+=rate;
   balanceEl.innerText='Your Balance: '+balance.toFixed(8)+' BTC';
   points.push(balance);
-  if(points.length>40)points.shift();
+  if(points.length>40) points.shift();
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.beginPath();
   points.forEach((p,i)=>{
@@ -175,6 +174,7 @@ setInterval(()=>{
     i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
   ctx.strokeStyle='#f2a900';
+  ctx.lineWidth=2;
   ctx.stroke();
 },1000);
 
@@ -186,7 +186,7 @@ setInterval(()=>{
   uptimeEl.innerText=`${Math.floor(minutes/60)}h ${minutes%60}m`;
 },60000);
 
-// Recent Activity: Pending + Completed
+// Recent Activity
 setInterval(()=>{
   const div=document.createElement('div');
   div.className='tx';
@@ -197,7 +197,7 @@ setInterval(()=>{
   if(txs.children.length>500) txs.removeChild(txs.lastChild);
 },1500);
 
-// Withdrawal feed (unchanged)
+// Withdrawal feed
 setInterval(()=>{
   const d=document.createElement('div');
   d.textContent=`💸 Withdrawal processed: $${(Math.random()*5000+500).toFixed(2)}`;
@@ -258,23 +258,30 @@ function confirmPayment(i){
 }
 
 /* LIVE TESTIMONIALS */
-const sampleMessages=[
-  "I just received my first payout! Very smooth experience. ⭐⭐⭐⭐⭐",
-  "Amazing platform, mining is really fast and profitable.",
-  "Customer support helped me instantly. Highly recommend!",
-  "My BTC balance keeps growing every hour. Loving it!",
-  "Withdrawal completed within 24 hours, very happy!",
-  "Started with Plan B, and the profits are consistent.",
-  "I feel secure investing here, great transparency!"
-];
-
 function initTestimonials(user){
   const testimonialFeed=document.getElementById('testimonialFeed');
   let shown=JSON.parse(localStorage.getItem('shownTestimonials')||"{}");
   if(!shown[user]) shown[user]=[];
 
+  const templates=[
+    "I just received my first payout! ⭐⭐⭐",
+    "Mining is really fast and profitable.",
+    "Support was super helpful today.",
+    "My BTC balance keeps growing every hour!",
+    "Withdrawal completed within 24 hours.",
+    "Started Plan B, profits consistent.",
+    "I feel secure investing here.",
+    "Amazing ROI in short time.",
+    "Charts and dashboard are very responsive!",
+    "I love the platform, easy to use.",
+    "Mining speed increased today!",
+    "Received payout today, so happy.",
+    "Plan C was a great choice for me.",
+    "User-friendly dashboard, highly recommend."
+  ];
+
   setInterval(()=>{
-    const remaining=sampleMessages.filter((msg)=>!shown[user].includes(msg));
+    const remaining=templates.filter(t=>!shown[user].includes(t));
     if(remaining.length===0) return;
     const msg=remaining[Math.floor(Math.random()*remaining.length)];
     const div=document.createElement('div');
@@ -282,8 +289,8 @@ function initTestimonials(user){
     testimonialFeed.prepend(div);
     shown[user].push(msg);
     localStorage.setItem('shownTestimonials',JSON.stringify(shown));
-    if(testimonialFeed.children.length>50) testimonialFeed.removeChild(testimonialFeed.lastChild);
-  },3000);
+    if(testimonialFeed.children.length>100) testimonialFeed.removeChild(testimonialFeed.lastChild);
+  },2500);
 }
 </script>
 
