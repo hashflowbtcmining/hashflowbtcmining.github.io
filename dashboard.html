@@ -85,7 +85,6 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
 document.addEventListener("DOMContentLoaded", function() {
 let currentEmail = localStorage.getItem("currentEmail") || "";
 
-// ===== Dashboard Data =====
 const plans = [
   {name:"Plan A", profit:"30%", min:200, max:599},
   {name:"Plan B", profit:"45%", min:600, max:1000},
@@ -95,32 +94,6 @@ const plans = [
   {name:"Plan F", profit:"85%", min:10000, max:"Unlimited"}
 ];
 
-// ===== Live Testimonials Data =====
-const testimonialsData = [
-  {name:"Alice", msg:"Just started mining, love it!"},
-  {name:"Bob", msg:"My first BTC deposit was smooth!"},
-  {name:"Charlie", msg:"Mining dashboard looks real and professional."},
-  {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
-  {name:"Eve", msg:"Highly recommend this platform."},
-  {name:"Frank", msg:"Mining has never been easier."},
-  {name:"Grace", msg:"I am seeing my BTC grow every minute."},
-  {name:"Hannah", msg:"Customer support helped me quickly."},
-  {name:"Ian", msg:"I love the live mining chart feature!"},
-  {name:"Jack", msg:"Fast deposits and smooth withdrawals."},
-  {name:"Kim", msg:"The dashboard feels very realistic."},
-  {name:"Leo", msg:"I’ve earned more than I expected!"},
-  {name:"Mia", msg:"Really enjoying the investment experience."},
-  {name:"Nina", msg:"Everything looks so professional."},
-  {name:"Oscar", msg:"I feel safe investing here."},
-  {name:"Paul", msg:"I made my first BTC profit today!"},
-  {name:"Quinn", msg:"The live activity makes it exciting."},
-  {name:"Rachel", msg:"This dashboard feels real and alive."},
-  {name:"Sam", msg:"I’m watching my investment grow!"},
-  {name:"Tina", msg:"Love how the charts update in real time."}
-];
-let lastTestimonials = [];
-
-// ===== Login =====
 function showDashboard(){
   document.getElementById("loginCard").style.display = "none";
   document.getElementById("dashboard").style.display = "block";
@@ -142,15 +115,11 @@ function copyAddress(){
     .then(()=>{alert('BTC address copied!');});
 }
 
-// ===== Mining Simulation =====
-let balance = 0;
-let blocks = 0;
-let minutes = 0;
+// ===== Global Mining =====
+let balance = 0, blocks = 0, minutes = 0;
 const txs = document.getElementById("txs");
-let rate = 0.00000008;
-let paused = false;
+let rate = 0.00000008, paused = false;
 
-// Chart
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 let points = [0];
@@ -173,7 +142,6 @@ function drawChart(){
 }
 setInterval(drawChart,500);
 
-// Mining stats
 setInterval(()=>{
   blocks += Math.floor(Math.random()*2);
   minutes++;
@@ -182,13 +150,9 @@ setInterval(()=>{
 },60000);
 
 setInterval(()=>{
-  if(!paused){
-    balance+=rate;
-    document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";
-  }
+  if(!paused){ balance+=rate; document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";}
 },1000);
 
-// Fake transactions
 function addFakeTx(){
   const div = document.createElement("div");
   div.className="tx";
@@ -200,15 +164,15 @@ function addFakeTx(){
 }
 setInterval(addFakeTx,1500);
 
-// Pause & hourly drop
 setInterval(()=>{ paused=true; setTimeout(()=>{paused=false;},60000); },15*60*1000);
 setInterval(()=>{ balance*=0.995; },60*60*1000);
 
-// ===== Investment Plans =====
+// ===== Investment Plans with mini live charts =====
 function formatMoney(val){return typeof val==="number"?"$"+val:val;}
 function initPlans(){
   const container = document.getElementById("plansContainer");
   container.innerHTML="";
+  
   plans.forEach((plan,index)=>{
     const div = document.createElement("div");
     div.className="plan";
@@ -230,6 +194,8 @@ function initPlans(){
         <button id="paidBtn${index}">Paid</button>
         <img id="preview${index}" class="screenshot-img" style="display:none;">
         <p class="countdown" id="countdown${index}">Withdrawal available after 3 days of mining</p>
+        <p class="btc" id="planBalance${index}">0.00000000 BTC</p>
+        <canvas id="planChart${index}" style="width:100%;height:100px;margin-top:10px;background:#0b0f1a;border-radius:8px;"></canvas>
       </div>
       <button id="investBtn${index}">Invest Now</button>
     `;
@@ -241,61 +207,79 @@ function initPlans(){
     const preview = document.getElementById("preview"+index);
     const countdown = document.getElementById("countdown"+index);
     const paidBtn = document.getElementById("paidBtn"+index);
+    const planBalance = document.getElementById("planBalance"+index);
+    const planCanvas = document.getElementById("planChart"+index);
+    const ctx = planCanvas.getContext("2d");
 
-    let paymentConfirmed = false;
-    let startTime = null;
+    let paymentConfirmed = false, startTime = null, investedAmount = 0, intervalId = null;
+    let points = [0];
 
     if(currentEmail==="evilpaid666@gmail.com"){
       paymentConfirmed = localStorage.getItem("plan"+index+"_confirmed")==="true";
       startTime = paymentConfirmed ? parseInt(localStorage.getItem("plan"+index+"_start")) : null;
+      investedAmount = paymentConfirmed ? parseFloat(localStorage.getItem("plan"+index+"_amount")) : 0;
       const savedImg = localStorage.getItem("plan"+index+"_screenshot");
-      if(savedImg){
-        preview.src = savedImg;
-        preview.style.display="block";
-        paySection.style.display="block";
-        investBtn.style.display="none";
-      }
+      if(savedImg){ preview.src = savedImg; preview.style.display="block"; paySection.style.display="block"; investBtn.style.display="none"; }
     }
 
     function updateCountdown(){
-      if(!paymentConfirmed){
-        countdown.innerText="Withdrawal available after 3 days of mining";
-        return;
-      }
+      if(!paymentConfirmed){ countdown.innerText="Withdrawal available after 3 days of mining"; return; }
       const now = Date.now();
       const elapsed = now-startTime;
       const remaining = 3*24*60*60*1000 - elapsed;
-      if(remaining<=0){
-        countdown.innerText="Withdrawal available now!";
-      } else {
-        const d = Math.floor(remaining/(1000*60*60*24));
-        const h = Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
-        const m = Math.floor((remaining%(1000*60*60))/(1000*60));
-        const s = Math.floor((remaining%(1000*60))/1000);
+      if(remaining<=0){ countdown.innerText="Withdrawal available now!"; } 
+      else {
+        const d=Math.floor(remaining/(1000*60*60*24)), h=Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
+        const m=Math.floor((remaining%(1000*60*60))/(1000*60)), s=Math.floor((remaining%(1000*60))/1000);
         countdown.innerText=`Withdrawal available in ${d}d ${h}h ${m}m ${s}s`;
       }
     }
-    setInterval(updateCountdown,1000);
-    updateCountdown();
+    setInterval(updateCountdown,1000); updateCountdown();
 
-    investBtn.onclick = ()=>{
-      paySection.style.display="block";
-      investBtn.style.display="none";
+    investBtn.onclick = ()=>{ paySection.style.display="block"; investBtn.style.display="none"; }
+
+    function drawPlanChart(){
+      ctx.clearRect(0,0,planCanvas.width,planCanvas.height);
+      const w = planCanvas.width/50;
+      ctx.beginPath();
+      let lastY = planCanvas.height - points[0]*planCanvas.height/0.01;
+      ctx.moveTo(0,lastY);
+      for(let i=1;i<points.length;i++){
+        let y = planCanvas.height - points[i]*planCanvas.height/0.01;
+        ctx.lineTo(i*w,y);
+      }
+      ctx.strokeStyle="#f2a900";
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+
+    function startMining(){
+      if(intervalId) clearInterval(intervalId);
+      const dailyPercent = parseFloat(plan.profit)/100;
+      const ratePerSecond = investedAmount*dailyPercent/24/60/60;
+      intervalId = setInterval(()=>{
+        const newBalance = parseFloat(planBalance.innerText)+ratePerSecond;
+        planBalance.innerText = newBalance.toFixed(8)+" BTC";
+        points.push(newBalance); if(points.length>50) points.shift();
+        drawPlanChart();
+      },1000);
     }
 
     paidBtn.onclick = ()=>{
-      const file = screenshotInput.files[0];
-      if(!file){alert("Please upload screenshot first."); return;}
+      const file = screenshotInput.files[0]; if(!file){alert("Please upload screenshot first."); return;}
       const reader = new FileReader();
       reader.onload = function(evt){
-        if(currentEmail==="evilpaid666@gmail.com"){
-          preview.src = evt.target.result;
-          preview.style.display="block";
+        investedAmount = prompt("Enter your investment amount:", plan.min);
+        investedAmount = parseFloat(investedAmount);
+        if(isNaN(investedAmount)||investedAmount<plan.min){ alert("Invalid amount!"); return; }
+        if(currentEmail==="evilpaid666@gmail.com"){ preview.src=evt.target.result; preview.style.display="block";
           localStorage.setItem("plan"+index+"_screenshot",evt.target.result);
           localStorage.setItem("plan"+index+"_confirmed","true");
           localStorage.setItem("plan"+index+"_start",Date.now());
+          localStorage.setItem("plan"+index+"_amount", investedAmount);
         }
-        alert(plan.name+" payment confirmed! Withdrawal countdown started.");
+        paymentConfirmed = true; startTime = Date.now(); startMining();
+        alert(plan.name+" payment confirmed! Mining started. Withdrawal available in 3 days.");
       }
       reader.readAsDataURL(file);
     }
@@ -312,24 +296,48 @@ function copyPlanAddress(index){
 function initTestimonials(){
   const container = document.getElementById("testimonials");
   container.innerHTML="";
-  setInterval(()=>{
-    let t;
-    do { t = testimonialsData[Math.floor(Math.random()*testimonialsData.length)]; }
-    while(lastTestimonials.includes(t.name));
-    
-    lastTestimonials.push(t.name);
-    if(lastTestimonials.length>5) lastTestimonials.shift();
-
+  const fullTestimonials = [
+    {name:"Alice", msg:"Just started mining, love it!"},
+    {name:"Bob", msg:"My first BTC deposit was smooth!"},
+    {name:"Charlie", msg:"Mining dashboard looks real and professional."},
+    {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
+    {name:"Eve", msg:"Highly recommend this platform."},
+    {name:"Frank", msg:"Mining has never been easier."},
+    {name:"Grace", msg:"I am seeing my BTC grow every minute."},
+    {name:"Hannah", msg:"Customer support helped me quickly."},
+    {name:"Ian", msg:"I love the live mining chart feature!"},
+    {name:"Jack", msg:"Fast deposits and smooth withdrawals."},
+    {name:"Kim", msg:"The dashboard feels very realistic."},
+    {name:"Leo", msg:"I’ve earned more than I expected!"},
+    {name:"Mia", msg:"Really enjoying the investment experience."},
+    {name:"Nina", msg:"Everything looks so professional."},
+    {name:"Oscar", msg:"I feel safe investing here."},
+    {name:"Paul", msg:"I made my first BTC profit today!"},
+    {name:"Quinn", msg:"The live activity makes it exciting."},
+    {name:"Rachel", msg:"This dashboard feels real and alive."},
+    {name:"Sam", msg:"I’m watching my investment grow!"},
+    {name:"Tina", msg:"Love how the charts update in real time."}
+  ];
+  let usedTestimonials = JSON.parse(localStorage.getItem("usedTestimonials")) || [];
+  let availableTestimonials = fullTestimonials.filter(t => !usedTestimonials.some(u => u.name===t.name && u.msg===t.msg));
+  function addTestimonial(){
+    if(availableTestimonials.length===0){
+      availableTestimonials = fullTestimonials.filter(t => !usedTestimonials.some(u => u.name===t.name && u.msg===t.msg));
+    }
+    if(availableTestimonials.length===0) return;
+    const index = Math.floor(Math.random()*availableTestimonials.length);
+    const t = availableTestimonials.splice(index,1)[0];
+    usedTestimonials.push(t);
+    localStorage.setItem("usedTestimonials", JSON.stringify(usedTestimonials));
     const div = document.createElement("div");
     div.className="tx";
     div.innerHTML=`<span><strong>${t.name}:</strong> ${t.msg}</span>`;
     container.prepend(div);
     if(container.children.length>50) container.removeChild(container.lastChild);
-  },3000);
+  }
+  setInterval(addTestimonial, 3000);
 }
-
-}); // DOMContentLoaded
+});
 </script>
-
 </body>
 </html>
