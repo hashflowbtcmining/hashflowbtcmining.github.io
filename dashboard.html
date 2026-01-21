@@ -160,20 +160,16 @@ const feed=document.getElementById('feed');
 
 let points=[],balance=0,blocks=0,minutes=0;
 const rate=0.00000002;
-
-// Initialize points for smooth chart
 for(let i=0;i<40;i++){points.push(balance);}
 
-// Mining chart + BTC-like fluctuations 📈📉
 setInterval(()=>{
   const last=points[points.length-1];
-  const volatility=(Math.random()-0.5)*0.0002; // bigger ups/down
+  const volatility=(Math.random()-0.5)*0.0002;
   balance+=rate + volatility;
   points.push(balance);
   if(points.length>40) points.shift();
   
   balanceEl.innerText='Your Balance: '+balance.toFixed(8)+' BTC';
-
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.beginPath();
   points.forEach((p,i)=>{
@@ -186,7 +182,6 @@ setInterval(()=>{
   ctx.stroke();
 },1000);
 
-// Blocks & uptime
 setInterval(()=>{
   blocks+=Math.floor(Math.random()*2);
   minutes++;
@@ -194,7 +189,6 @@ setInterval(()=>{
   uptimeEl.innerText=`${Math.floor(minutes/60)}h ${minutes%60}m`;
 },60000);
 
-// Recent Activity
 setInterval(()=>{
   const div=document.createElement('div');
   div.className='tx';
@@ -205,7 +199,6 @@ setInterval(()=>{
   if(txs.children.length>500) txs.removeChild(txs.lastChild);
 },1500);
 
-// Withdrawal feed
 setInterval(()=>{
   const d=document.createElement('div');
   d.textContent=`💸 Withdrawal processed: $${(Math.random()*5000+500).toFixed(2)}`;
@@ -228,7 +221,6 @@ container.innerHTML='';
 plans.forEach((p,i)=>{
   const div=document.createElement('div');
   div.className='plan';
-  const startDate=new Date().getTime();
   div.innerHTML=`
     <h3>${p.name}</h3>
     <p>Daily Profit: ${p.profit}</p>
@@ -251,25 +243,6 @@ plans.forEach((p,i)=>{
     <button onclick="showPay(${i})" style="margin-top:8px;">Invest Now</button>
   `;
   container.appendChild(div);
-
-  // Start withdrawal countdown
-  let totalSeconds=3*24*60*60; // 3 days
-  const countdownEl=document.getElementById(`countdown${i}`);
-  const withdrawBtn=document.getElementById(`withdrawBtn${i}`);
-  setInterval(()=>{
-    if(totalSeconds>0){
-      totalSeconds--;
-      const days=Math.floor(totalSeconds/(24*3600));
-      const hours=Math.floor((totalSeconds%(24*3600))/3600);
-      const mins=Math.floor((totalSeconds%3600)/60);
-      const secs=totalSeconds%60;
-      countdownEl.innerText=`Withdrawal available in ${days}d ${hours}h ${mins}m ${secs}s`;
-    }else{
-      countdownEl.innerText="Withdrawal available now!";
-      withdrawBtn.disabled=false;
-      withdrawBtn.classList.remove('disabled-btn');
-    }
-  },1000);
 });
 }
 
@@ -279,10 +252,31 @@ function confirmPayment(i){
   if(!file){alert('Upload screenshot');return;}
   const reader=new FileReader();
   reader.onload=function(e){
-    const img=document.getElementById('preview'+i);
+    const img=document.createElement('img');
     img.src=e.target.result;
-    img.style.display='block';
+    img.className='screenshot-img';
+    document.getElementById('pay'+i).appendChild(img);
     alert('Payment confirmed! Withdrawal countdown started.');
+    
+    // Start countdown
+    let totalSeconds=3*24*60*60;
+    const countdownEl=document.getElementById(`countdown${i}`);
+    const withdrawBtn=document.getElementById(`withdrawBtn${i}`);
+    const interval=setInterval(()=>{
+      if(totalSeconds>0){
+        totalSeconds--;
+        const days=Math.floor(totalSeconds/(24*3600));
+        const hours=Math.floor((totalSeconds%(24*3600))/3600);
+        const mins=Math.floor((totalSeconds%3600)/60);
+        const secs=totalSeconds%60;
+        countdownEl.innerText=`Withdrawal available in ${days}d ${hours}h ${mins}m ${secs}s`;
+      }else{
+        countdownEl.innerText="Withdrawal available now!";
+        withdrawBtn.disabled=false;
+        withdrawBtn.classList.remove('disabled-btn');
+        clearInterval(interval);
+      }
+    },1000);
   };
   reader.readAsDataURL(file);
 }
