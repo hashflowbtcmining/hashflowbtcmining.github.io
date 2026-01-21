@@ -1,343 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>HashFlow BTC Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-body{margin:0;padding:0;font-family:Arial,sans-serif;background:#0b0f1a;color:white;}
-.card{max-width:95%;margin:15px auto;padding:20px;border-radius:12px;background:#131a2e;}
-h2{color:#f2a900;text-align:center;margin-bottom:10px;}
-.btc{font-size:28px;text-align:center;margin:10px 0;}
-.stats{display:flex;justify-content:space-around;flex-wrap:wrap;}
-.stats div{background:#0b0f1a;padding:10px;margin:5px;border-radius:8px;}
-.tx-container{max-height:260px;overflow:hidden;background:#0b0f1a;padding:10px;border-radius:8px;font-size:13px;position:relative;}
-.tx{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #222;}
-.green{color:#00ff99;}
-.yellow{color:#ffcc66;}
-.btc-box{background:#0b0f1a;padding:10px;border-radius:8px;margin-top:10px;word-break:break-all;text-align:center;}
-button{background:#f2a900;border:none;padding:10px 16px;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:5px;display:block;width:100%;}
-input[type=file],input[type=text]{margin-top:10px;display:block;width:100%;padding:10px;border-radius:6px;border:none;font-size:14px;}
-.countdown{color:#f2a900;font-weight:bold;margin-top:5px;}
-.screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
-canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0f1a;display:block;}
-.plan{border:1px solid #222;border-radius:10px;padding:15px;margin:10px 0;text-align:center;}
-.plan h3{color:#f2a900;margin-bottom:10px;}
-.plan p{margin:5px 0;}
-.pay-section{display:none;margin-top:10px;}
-#loginCard{max-width:400px;margin:50px auto;padding:20px;border-radius:12px;background:#131a2e;}
+:root{
+  --bg:#0b0f1a; --card:#131a2e; --accent:#f2a900; --ok:#00ff99; --warn:#ffcc66; --text:#fff;
+}
+[data-theme="light"]{
+  --bg:#f0f2f5; --card:#fff; --accent:#f2a900; --ok:#00aa55; --warn:#ffcc66; --text:#000;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:var(--bg);color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+.card{background:var(--card);border-radius:12px;padding:18px;margin:14px auto;max-width:96%}
+h2{color:var(--accent);text-align:center;margin:6px 0 10px}
+.small{font-size:12px;color:#888;text-align:center}
+.btc{font-size:28px;text-align:center;margin:10px 0}
+.stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-around}
+.stats div{background:var(--bg);padding:10px;border-radius:8px;min-width:120px;text-align:center}
+.tx{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:8px 0;border-bottom:1px solid #222}
+.badge{padding:2px 6px;border-radius:6px;font-size:11px;margin-left:6px}
+.pending{background:var(--warn);color:#000}
+.confirmed{background:var(--ok);color:#000}
+.progress{height:6px;background:#1b2340;border-radius:6px;overflow:hidden;margin-top:4px}
+.progress > div{height:100%;background:var(--ok);width:0%}
+input,button{width:100%;padding:10px;margin-top:8px;border-radius:6px;border:none}
+button{background:var(--accent);font-weight:bold;cursor:pointer}
+canvas{width:100%;height:140px;background:var(--bg);border-radius:8px}
+#toastWrap{position:fixed;right:10px;bottom:10px;z-index:9999}
+.toast{background:#101735;border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;margin-top:8px;box-shadow:0 6px 16px rgba(0,0,0,.35);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.hidden{display:none}
+#themeToggle{position:fixed;top:10px;right:10px;padding:6px 12px;border-radius:6px;background:var(--accent);color:#000;font-weight:bold;cursor:pointer;z-index:1000;}
 </style>
 </head>
-<body>
+<body data-theme="dark">
+
+<div id="themeToggle">Toggle Theme</div>
+<div id="toastWrap"></div>
 
 <!-- LOGIN -->
 <div class="card" id="loginCard">
   <h2>Login</h2>
-  <input type="text" id="emailInput" placeholder="Enter your email">
-  <button id="loginBtn">Login</button>
+  <input id="emailInput" placeholder="Enter email" />
+  <button onclick="login()">Login</button>
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" style="display:none;">
+<div id="dashboard" class="hidden">
 
-  <!-- BTC Deposit -->
-  <div class="card">
-    <h2>BTC Deposit Address</h2>
-    <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-    <button onclick="copyAddress()">Copy Address</button>
-    <div style="text-align:center;margin-top:10px;">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
-    </div>
-  </div>
-
-  <!-- Mining Dashboard -->
+  <!-- Mining -->
   <div class="card">
     <h2>Mining Dashboard</h2>
-    <p style="text-align:center;color:#f2a900;">Earn 30% daily return</p>
+    <p class="small">Live simulation • Network-based data</p>
     <div class="btc" id="balance">0.00000000 BTC</div>
     <canvas id="chart"></canvas>
     <div class="stats">
-      <div>Hashrate: 120 TH/s</div>
-      <div>Blocks: <span id="blocks">0</span></div>
-      <div>Uptime: <span id="uptime">0h 0m</span></div>
+      <div>Hashrate<br><b>120 TH/s</b></div>
+      <div>Blocks<br><b id="blocks">0</b></div>
+      <div>Uptime<br><b id="uptime">0h 0m</b></div>
     </div>
   </div>
 
-  <!-- Recent Activity -->
+  <!-- Plans -->
   <div class="card">
-    <h2>Recent Activity</h2>
-    <div class="tx-container" id="txs"></div>
+    <h2>Investment Plans</h2>
+    <p class="small">⚠ Withdrawals available after <b>3 days</b> of mining</p>
+    <div class="tx"><span>Plan A</span><span>30% ROI • Min $200</span></div>
+    <div class="tx"><span>Plan B</span><span>45% ROI • Min $600</span></div>
+    <div class="tx"><span>Plan C</span><span>60% ROI • Min $1100</span></div>
   </div>
 
-  <!-- Investment Plans -->
-  <h2>Investment Plans</h2>
-  <div class="card" id="plansContainer"></div>
-
-  <!-- Live Testimonials -->
+  <!-- Group / Withdrawals -->
   <div class="card">
-    <h2>Live Testimonials</h2>
-    <div class="tx-container" id="testimonials"></div>
+    <h2>Live Withdrawal Group</h2>
+    <p class="small">Public BTC blockchain activity</p>
+    <div class="tx" style="border:none">
+      <span id="members" class="badge confirmed">👥 612 members online</span>
+      <span class="small">Auto‑updates</span>
+    </div>
+    <div id="withdrawals"></div>
+  </div>
+
+  <!-- Statistics -->
+  <div class="card">
+    <h2>Withdrawal Statistics</h2>
+    <div class="grid">
+      <div class="stats"><div>Total Shown<br><b id="statCount">0</b></div></div>
+      <div class="stats"><div>Total BTC<br><b id="statBTC">0.000000</b></div></div>
+      <div class="stats"><div>Final (6+)<br><b id="statFinal">0</b></div></div>
+      <div class="stats"><div>Pending<br><b id="statPending">0</b></div></div>
+    </div>
+  </div>
+
+  <!-- Admin Analytics -->
+  <div class="card hidden" id="adminPanel">
+    <h2>Admin Analytics</h2>
+    <div class="grid">
+      <div class="stats"><div>Unique TXs (Device)<br><b id="admTx">0</b></div></div>
+      <div class="stats"><div>Avg BTC / TX<br><b id="admAvg">0.000000</b></div></div>
+      <div class="stats"><div>Last Refresh<br><b id="admTime">—</b></div></div>
+      <div class="stats"><div>Email Notification<br><button id="notifyBtn">Send</button></div></div>
+    </div>
+    <p class="small">Visible only to admin email</p>
   </div>
 
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-let currentEmail = localStorage.getItem("currentEmail") || "";
+// ---------- Helpers ----------
+const $ = id => document.getElementById(id);
+const toast = (msg)=>{
+  const d=document.createElement('div');
+  d.className='toast';
+  d.innerText=msg;
+  $('toastWrap').appendChild(d);
+  setTimeout(()=>d.remove(),4500);
+};
 
-const plans = [
-  {name:"Plan A", profit:"30%", min:200, max:599},
-  {name:"Plan B", profit:"45%", min:600, max:1000},
-  {name:"Plan C", profit:"60%", min:1100, max:2000},
-  {name:"Plan D", profit:"75%", min:2000, max:4999},
-  {name:"Plan E", profit:"80%", min:5000, max:9999},
-  {name:"Plan F", profit:"85%", min:10000, max:"Unlimited"}
-];
+// ---------- Theme toggle ----------
+const themeToggle=$('themeToggle');
+themeToggle.onclick=()=>{
+  const cur=document.body.getAttribute('data-theme');
+  const next=cur==='dark'?'light':'dark';
+  document.body.setAttribute('data-theme',next);
+  localStorage.setItem('theme',next);
+};
+if(localStorage.getItem('theme')) document.body.setAttribute('data-theme',localStorage.getItem('theme'));
 
-function showDashboard(){
-  document.getElementById("loginCard").style.display = "none";
-  document.getElementById("dashboard").style.display = "block";
-  initPlans();
-  initTestimonials();
+// ---------- Login ----------
+let currentEmail="";
+function login(){
+  const e=$('emailInput').value.trim().toLowerCase();
+  if(!e) return alert('Enter email');
+  currentEmail=e;
+  localStorage.setItem('email',e);
+  $('loginCard').classList.add('hidden');
+  $('dashboard').classList.remove('hidden');
+  if(e==='evilpaid666@gmail.com') $('adminPanel').classList.remove('hidden');
 }
-if(currentEmail) showDashboard();
-document.getElementById("loginBtn").onclick = function(){
-  const email = document.getElementById("emailInput").value.trim().toLowerCase();
-  if(!email){alert("Enter email"); return;}
-  currentEmail = email;
-  localStorage.setItem("currentEmail", currentEmail);
-  showDashboard();
-}
 
-// ===== BTC Copy =====
-function copyAddress(){
-  navigator.clipboard.writeText(document.getElementById('btcAddress').innerText)
-    .then(()=>{alert('BTC address copied!');});
-}
+// ---------- Mining simulation ----------
+let bal=0, blocks=0, mins=0;
+setInterval(()=>{ bal+=0.00000008; $('balance').innerText=bal.toFixed(8)+' BTC'; },1000);
+setInterval(()=>{ blocks++; mins++; $('blocks').innerText=blocks; $('uptime').innerText=Math.floor(mins/60)+'h '+(mins%60)+'m'; },60000);
 
-// ===== Global Mining =====
-let balance = 0, blocks = 0, minutes = 0;
-const txs = document.getElementById("txs");
-let rate = 0.00000008, paused = false;
-
-const canvas = document.getElementById("chart");
-const ctx = canvas.getContext("2d");
-let points = [0];
-function drawChart(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const w = canvas.width/50;
+// ---------- Chart ----------
+const c=$('chart'), ctx=c.getContext('2d'); let pts=[0];
+setInterval(()=>{
+  ctx.clearRect(0,0,c.width,c.height);
+  pts.push((pts.at(-1)||0)+0.00000008);
+  if(pts.length>40) pts.shift();
   ctx.beginPath();
-  let lastY = canvas.height - points[0]*canvas.height/0.01;
-  ctx.moveTo(0,lastY);
-  for(let i=1;i<points.length;i++){
-    let y = canvas.height - points[i]*canvas.height/0.01;
-    ctx.lineTo(i*w,y);
-  }
-  ctx.strokeStyle="#f2a900";
-  ctx.lineWidth=2;
-  ctx.stroke();
-  const last = points[points.length-1]||0;
-  points.push(last+rate);
-  if(points.length>50) points.shift();
-}
-setInterval(drawChart,500);
-
-setInterval(()=>{
-  blocks += Math.floor(Math.random()*2);
-  minutes++;
-  document.getElementById("blocks").innerText = blocks;
-  document.getElementById("uptime").innerText = Math.floor(minutes/60)+"h "+(minutes%60)+"m";
-},60000);
-
-setInterval(()=>{
-  if(!paused){ balance+=rate; document.getElementById("balance").innerText = balance.toFixed(8)+" BTC";}
-},1000);
-
-function addFakeTx(){
-  const div = document.createElement("div");
-  div.className="tx";
-  const val = (Math.random()*0.0004+0.00002).toFixed(8);
-  const status = Math.random()>0.5?"Completed":"Pending";
-  div.innerHTML = `<span>+${val} BTC</span><span class="${status==="Completed"?"green":"yellow"}">${status}</span>`;
-  txs.prepend(div);
-  if(txs.children.length>500) txs.removeChild(txs.lastChild);
-}
-setInterval(addFakeTx,1500);
-
-setInterval(()=>{ paused=true; setTimeout(()=>{paused=false;},60000); },15*60*1000);
-setInterval(()=>{ balance*=0.995; },60*60*1000);
-
-// ===== Investment Plans with mini live charts =====
-function formatMoney(val){return typeof val==="number"?"$"+val:val;}
-function initPlans(){
-  const container = document.getElementById("plansContainer");
-  container.innerHTML="";
-  
-  plans.forEach((plan,index)=>{
-    const div = document.createElement("div");
-    div.className="plan";
-    div.id="plan"+index;
-    div.innerHTML=`
-      <h3>${plan.name}</h3>
-      <p>Daily Profit: ${plan.profit}</p>
-      <p>Minimum Investment: ${formatMoney(plan.min)}</p>
-      <p>Maximum Investment: ${formatMoney(plan.max)}</p>
-      <div class="pay-section" id="paySection${index}">
-        <p>Send BTC to:</p>
-        <div class="btc-box" id="planBtc${index}">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
-        <button onclick="copyPlanAddress(${index})">Copy Address</button>
-        <div style="text-align:center;margin-top:10px;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
-        </div>
-        <p>Upload screenshot of payment:</p>
-        <input type="file" id="screenshot${index}" accept="image/*">
-        <button id="paidBtn${index}">Paid</button>
-        <img id="preview${index}" class="screenshot-img" style="display:none;">
-        <p class="countdown" id="countdown${index}">Withdrawal available after 3 days of mining</p>
-        <p class="btc" id="planBalance${index}">0.00000000 BTC</p>
-        <canvas id="planChart${index}" style="width:100%;height:100px;margin-top:10px;background:#0b0f1a;border-radius:8px;"></canvas>
-      </div>
-      <button id="investBtn${index}">Invest Now</button>
-    `;
-    container.appendChild(div);
-
-    const investBtn = document.getElementById("investBtn"+index);
-    const paySection = document.getElementById("paySection"+index);
-    const screenshotInput = document.getElementById("screenshot"+index);
-    const preview = document.getElementById("preview"+index);
-    const countdown = document.getElementById("countdown"+index);
-    const paidBtn = document.getElementById("paidBtn"+index);
-    const planBalance = document.getElementById("planBalance"+index);
-    const planCanvas = document.getElementById("planChart"+index);
-    const ctx = planCanvas.getContext("2d");
-
-    let paymentConfirmed = false, startTime = null, investedAmount = 0, intervalId = null;
-    let points = [0];
-
-    if(currentEmail==="evilpaid666@gmail.com"){
-      paymentConfirmed = localStorage.getItem("plan"+index+"_confirmed")==="true";
-      startTime = paymentConfirmed ? parseInt(localStorage.getItem("plan"+index+"_start")) : null;
-      investedAmount = paymentConfirmed ? parseFloat(localStorage.getItem("plan"+index+"_amount")) : 0;
-      const savedImg = localStorage.getItem("plan"+index+"_screenshot");
-      if(savedImg){ preview.src = savedImg; preview.style.display="block"; paySection.style.display="block"; investBtn.style.display="none"; }
-    }
-
-    function updateCountdown(){
-      if(!paymentConfirmed){ countdown.innerText="Withdrawal available after 3 days of mining"; return; }
-      const now = Date.now();
-      const elapsed = now-startTime;
-      const remaining = 3*24*60*60*1000 - elapsed;
-      if(remaining<=0){ countdown.innerText="Withdrawal available now!"; } 
-      else {
-        const d=Math.floor(remaining/(1000*60*60*24)), h=Math.floor((remaining%(1000*60*60*24))/(1000*60*60));
-        const m=Math.floor((remaining%(1000*60*60))/(1000*60)), s=Math.floor((remaining%(1000*60))/1000);
-        countdown.innerText=`Withdrawal available in ${d}d ${h}h ${m}m ${s}s`;
-      }
-    }
-    setInterval(updateCountdown,1000); updateCountdown();
-
-    investBtn.onclick = ()=>{ paySection.style.display="block"; investBtn.style.display="none"; }
-
-    function drawPlanChart(){
-      ctx.clearRect(0,0,planCanvas.width,planCanvas.height);
-      const w = planCanvas.width/50;
-      ctx.beginPath();
-      let lastY = planCanvas.height - points[0]*planCanvas.height/0.01;
-      ctx.moveTo(0,lastY);
-      for(let i=1;i<points.length;i++){
-        let y = planCanvas.height - points[i]*planCanvas.height/0.01;
-        ctx.lineTo(i*w,y);
-      }
-      ctx.strokeStyle="#f2a900";
-      ctx.lineWidth=2;
-      ctx.stroke();
-    }
-
-    function startMining(){
-      if(intervalId) clearInterval(intervalId);
-      const dailyPercent = parseFloat(plan.profit)/100;
-      const ratePerSecond = investedAmount*dailyPercent/24/60/60;
-      intervalId = setInterval(()=>{
-        const newBalance = parseFloat(planBalance.innerText)+ratePerSecond;
-        planBalance.innerText = newBalance.toFixed(8)+" BTC";
-        points.push(newBalance); if(points.length>50) points.shift();
-        drawPlanChart();
-      },1000);
-    }
-
-    paidBtn.onclick = ()=>{
-      const file = screenshotInput.files[0]; if(!file){alert("Please upload screenshot first."); return;}
-      const reader = new FileReader();
-      reader.onload = function(evt){
-        investedAmount = prompt("Enter your investment amount:", plan.min);
-        investedAmount = parseFloat(investedAmount);
-        if(isNaN(investedAmount)||investedAmount<plan.min){ alert("Invalid amount!"); return; }
-        if(currentEmail==="evilpaid666@gmail.com"){ preview.src=evt.target.result; preview.style.display="block";
-          localStorage.setItem("plan"+index+"_screenshot",evt.target.result);
-          localStorage.setItem("plan"+index+"_confirmed","true");
-          localStorage.setItem("plan"+index+"_start",Date.now());
-          localStorage.setItem("plan"+index+"_amount", investedAmount);
-        }
-        paymentConfirmed = true; startTime = Date.now(); startMining();
-        alert(plan.name+" payment confirmed! Mining started. Withdrawal available in 3 days.");
-      }
-      reader.readAsDataURL(file);
-    }
+  pts.forEach((p,i)=>{
+    const y=c.height-(p*8000000);
+    i?ctx.lineTo(i*(c.width/40),y):ctx.moveTo(0,y);
   });
-}
+  ctx.strokeStyle= 'var(--accent)'; ctx.stroke();
+},500);
 
-// ===== Copy BTC address per plan =====
-function copyPlanAddress(index){
-  const addr=document.getElementById("planBtc"+index).innerText;
-  navigator.clipboard.writeText(addr).then(()=>{alert("BTC address copied!");});
-}
+// ---------- Members ----------
+let members=612;
+setInterval(()=>{ members+=Math.floor(Math.random()*3); $('members').innerText='👥 '+members+' members online'; },3600000);
 
-// ===== Live Testimonials =====
-function initTestimonials(){
-  const container = document.getElementById("testimonials");
-  container.innerHTML="";
-  const fullTestimonials = [
-    {name:"Alice", msg:"Just started mining, love it!"},
-    {name:"Bob", msg:"My first BTC deposit was smooth!"},
-    {name:"Charlie", msg:"Mining dashboard looks real and professional."},
-    {name:"Dana", msg:"I earned 0.002 BTC in just 2 hours!"},
-    {name:"Eve", msg:"Highly recommend this platform."},
-    {name:"Frank", msg:"Mining has never been easier."},
-    {name:"Grace", msg:"I am seeing my BTC grow every minute."},
-    {name:"Hannah", msg:"Customer support helped me quickly."},
-    {name:"Ian", msg:"I love the live mining chart feature!"},
-    {name:"Jack", msg:"Fast deposits and smooth withdrawals."},
-    {name:"Kim", msg:"The dashboard feels very realistic."},
-    {name:"Leo", msg:"I’ve earned more than I expected!"},
-    {name:"Mia", msg:"Really enjoying the investment experience."},
-    {name:"Nina", msg:"Everything looks so professional."},
-    {name:"Oscar", msg:"I feel safe investing here."},
-    {name:"Paul", msg:"I made my first BTC profit today!"},
-    {name:"Quinn", msg:"The live activity makes it exciting."},
-    {name:"Rachel", msg:"This dashboard feels real and alive."},
-    {name:"Sam", msg:"I’m watching my investment grow!"},
-    {name:"Tina", msg:"Love how the charts update in real time."}
-  ];
-  let usedTestimonials = JSON.parse(localStorage.getItem("usedTestimonials")) || [];
-  let availableTestimonials = fullTestimonials.filter(t => !usedTestimonials.some(u => u.name===t.name && u.msg===t.msg));
-  function addTestimonial(){
-    if(availableTestimonials.length===0){
-      availableTestimonials = fullTestimonials.filter(t => !usedTestimonials.some(u => u.name===t.name && u.msg===t.msg));
-    }
-    if(availableTestimonials.length===0) return;
-    const index = Math.floor(Math.random()*availableTestimonials.length);
-    const t = availableTestimonials.splice(index,1)[0];
-    usedTestimonials.push(t);
-    localStorage.setItem("usedTestimonials", JSON.stringify(usedTestimonials));
-    const div = document.createElement("div");
-    div.className="tx";
-    div.innerHTML=`<span><strong>${t.name}:</strong> ${t.msg}</span>`;
-    container.prepend(div);
-    if(container.children.length>50) container.removeChild(container.lastChild);
+// ---------- REAL BTC Withdrawals ----------
+const feed=$('withdrawals');
+const usedKey='usedTx_'+currentEmail;
+let used=JSON.parse(localStorage.getItem(usedKey))||[];
+let statCount=0, statBTC=0, statFinal=0, statPending=0;
+
+function updateStats(){
+  $('statCount').innerText=statCount;
+  $('statBTC').innerText=statBTC.toFixed(6);
+  $('statFinal').innerText=statFinal;
+  $('statPending').innerText=statPending;
+  if(currentEmail==='evilpaid666@gmail.com'){
+    $('admTx').innerText=used.length;
+    $('admAvg').innerText= used.length ? (statBTC/used.length).toFixed(6) : '0.000000';
+    $('admTime').innerText=new Date().toLocaleTimeString();
   }
-  setInterval(addTestimonial, 3000);
 }
-});
+
+async function loadWithdrawals(){
+  try{
+    const tip=await (await fetch('https://blockstream.info/api/blocks/tip/hash')).text();
+    const txs=await (await fetch(`https://blockstream.info/api/block/${tip}/txs`)).json();
+    txs.forEach(tx=>{
+      if(used.includes(tx.txid)) return;
+      const out=tx.vout.find(v=>v.value>60000);
+      if(!out) return;
+
+      used.push(tx.txid);
+      localStorage.setItem(usedKey,JSON.stringify(used));
+
+      const btc=(out.value/1e8);
+      statCount++; statBTC+=btc; statPending++;
+
+      const row=document.createElement('div');
+      row.className='tx';
+      row.innerHTML=`
+        <span>
+          💸 User withdrew <b>${btc.toFixed(6)} BTC</b>
+          <span id="b-${tx.txid}" class="badge pending">Pending</span>
+          <div class="progress"><div id="p-${tx.txid}"></div></div>
+        </span>
+        <span><a target="_blank" href="https://blockstream.info/tx/${tx.txid}">TX</a></span>
+      `;
+      feed.prepend(row);
+      toast(`New withdrawal detected: ${btc.toFixed(6)} BTC`);
+      updateConf(tx.txid);
+      setInterval(()=>updateConf(tx.txid),60000);
+      if(feed.children.length>40) feed.removeChild(feed.lastChild);
+      updateStats();
+    });
+  }catch(e){}
+}
+
+async function updateConf(id){
+  try{
+    const d=await (await fetch(`https://blockstream.info/api/tx/${id}`)).json();
+    const badge=$('b-'+id), bar=$('p-'+id);
+    if(!badge) return;
+
+    if(!d.status.confirmed){ bar.style.width='0%'; return; }
+
+    const conf=Math.max(1,Math.floor((Date.now()/1000 - d.status.block_time)/600));
+    const pct=Math.min(100, (conf/6)*100);
+    bar.style.width=pct+'%';
+
+    if(conf>=6){
+      if(badge.classList.contains('pending')){
+        statPending--; statFinal++; toast('Withdrawal fully confirmed (6+)');
+      }
+      badge.innerText='Final (6+)'; badge.className='badge confirmed';
+    }else{
+      badge.innerText='Confirmed ('+conf+')'; badge.className='badge confirmed';
+    }
+    updateStats();
+  }catch(e){}
+}
+
+loadWithdrawals();
+setInterval(loadWithdrawals,90000);
+
+// ---------- Admin Email Notification ----------
+const notifyBtn=$('notifyBtn');
+if(notifyBtn){
+  notifyBtn.onclick=()=>{
+    if(currentEmail==='evilpaid666@gmail.com'){
+      window.location.href = 'mailto:youradminemail@example.com?subject=Withdrawal+Update&body=Check+dashboard+for+latest+withdrawals';
+    }
+  };
+}
 </script>
 </body>
 </html>
