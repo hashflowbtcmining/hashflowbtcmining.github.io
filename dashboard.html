@@ -160,11 +160,15 @@ const feed=document.getElementById('feed');
 let points=[0],balance=0,blocks=0,minutes=0;
 const rate=0.00000002;
 
-// Mining chart + balance (chart leading)
+// Mining chart + BTC-like fluctuation 📈📉
 setInterval(()=>{
-  balance+=rate;
+  // Random fluctuation
+  const last=points[points.length-1];
+  let change=(Math.random()-0.5)*rate*10; // small up/down movement
+  const next=Math.max(0,last+rate+change);
+  balance+=rate+change;
   balanceEl.innerText='Your Balance: '+balance.toFixed(8)+' BTC';
-  points.push(balance);
+  points.push(next);
   if(points.length>40) points.shift();
   ctx.clearRect(0,0,canvas.width,canvas.height);
   ctx.beginPath();
@@ -264,33 +268,34 @@ function initTestimonials(user){
   if(!shown[user]) shown[user]=[];
 
   const templates=[
-    "I just received my first payout! ⭐⭐⭐",
-    "Mining is really fast and profitable.",
-    "Support was super helpful today.",
-    "My BTC balance keeps growing every hour!",
-    "Withdrawal completed within 24 hours.",
-    "Started Plan B, profits consistent.",
-    "I feel secure investing here.",
-    "Amazing ROI in short time.",
-    "Charts and dashboard are very responsive!",
-    "I love the platform, easy to use.",
-    "Mining speed increased today!",
-    "Received payout today, so happy.",
-    "Plan C was a great choice for me.",
-    "User-friendly dashboard, highly recommend."
+    "Just got my first payout! Highly recommend.",
+    "Mining speed is amazing, balance grows fast.",
+    "Support answered my question instantly.",
+    "Plan B is giving consistent profits.",
+    "BTC balance increased today!",
+    "Withdrawal was processed quickly.",
+    "Dashboard is very user-friendly.",
+    "Feeling secure with my investments here.",
+    "Charts are responsive and accurate.",
+    "I love this platform, easy to use.",
+    "Mining has been profitable for me.",
+    "Received payout today, very happy!",
+    "Plan C was a great choice for my ROI.",
+    "Profits are real and visible daily.",
+    "Fast withdrawals and responsive support."
   ];
 
+  // nonstop testimonials
   setInterval(()=>{
     const remaining=templates.filter(t=>!shown[user].includes(t));
-    if(remaining.length===0) return;
-    const msg=remaining[Math.floor(Math.random()*remaining.length)];
+    const msg=remaining.length?remaining[Math.floor(Math.random()*remaining.length)]:templates[Math.floor(Math.random()*templates.length)];
     const div=document.createElement('div');
     div.textContent=msg;
     testimonialFeed.prepend(div);
     shown[user].push(msg);
     localStorage.setItem('shownTestimonials',JSON.stringify(shown));
-    if(testimonialFeed.children.length>100) testimonialFeed.removeChild(testimonialFeed.lastChild);
-  },2500);
+    if(testimonialFeed.children.length>200) testimonialFeed.removeChild(testimonialFeed.lastChild);
+  },1500);
 }
 </script>
 
