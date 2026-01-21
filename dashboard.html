@@ -27,9 +27,11 @@ canvas{width:100%;height:140px;background:#0b0f1a;border-radius:8px;}
 #menu{display:none;position:fixed;top:50px;right:10px;background:var(--card);padding:10px;border-radius:10px;}
 #menu div{padding:8px;cursor:pointer;}
 .plan{border:1px solid #222;padding:15px;border-radius:10px;margin-top:10px;text-align:center;}
-.pay-section{display:none;margin-top:10px;}
+.pay-section{margin-top:10px;}
+.pay-section p{margin:5px 0;}
 .screenshot-img{max-width:100%;margin-top:10px;border-radius:8px;border:1px solid #222;}
 .countdown{color:var(--accent);font-weight:bold;margin-top:5px;}
+.disabled-btn{opacity:0.5;cursor:not-allowed;}
 </style>
 </head>
 
@@ -164,7 +166,6 @@ for(let i=0;i<40;i++){points.push(balance);}
 
 // Mining chart + BTC-like fluctuations 📈📉
 setInterval(()=>{
-  // Large random fluctuation for visible "leading" effect
   const last=points[points.length-1];
   const volatility=(Math.random()-0.5)*0.0002; // bigger ups/down
   balance+=rate + volatility;
@@ -227,6 +228,7 @@ container.innerHTML='';
 plans.forEach((p,i)=>{
   const div=document.createElement('div');
   div.className='plan';
+  const startDate=new Date().getTime();
   div.innerHTML=`
     <h3>${p.name}</h3>
     <p>Daily Profit: ${p.profit}</p>
@@ -241,15 +243,36 @@ plans.forEach((p,i)=>{
       </div>
       <input type="file" id="screenshot${i}">
       <button onclick="confirmPayment(${i})" style="margin-top:5px;">Paid</button>
-      <img id="preview${i}" class="screenshot-img" style="display:none">
+
       <p class="countdown" id="countdown${i}">Withdrawal available in 3d 0h 0m 0s</p>
+      <button id="withdrawBtn${i}" class="disabled-btn" disabled>Withdraw</button>
     </div>
 
     <button onclick="showPay(${i})" style="margin-top:8px;">Invest Now</button>
   `;
   container.appendChild(div);
+
+  // Start withdrawal countdown
+  let totalSeconds=3*24*60*60; // 3 days
+  const countdownEl=document.getElementById(`countdown${i}`);
+  const withdrawBtn=document.getElementById(`withdrawBtn${i}`);
+  setInterval(()=>{
+    if(totalSeconds>0){
+      totalSeconds--;
+      const days=Math.floor(totalSeconds/(24*3600));
+      const hours=Math.floor((totalSeconds%(24*3600))/3600);
+      const mins=Math.floor((totalSeconds%3600)/60);
+      const secs=totalSeconds%60;
+      countdownEl.innerText=`Withdrawal available in ${days}d ${hours}h ${mins}m ${secs}s`;
+    }else{
+      countdownEl.innerText="Withdrawal available now!";
+      withdrawBtn.disabled=false;
+      withdrawBtn.classList.remove('disabled-btn');
+    }
+  },1000);
 });
 }
+
 function showPay(i){document.getElementById('pay'+i).style.display='block';}
 function confirmPayment(i){
   const file=document.getElementById('screenshot'+i).files[0];
@@ -306,4 +329,4 @@ function initTestimonials(user){
 </script>
 
 </body>
-  </html>
+</html>
